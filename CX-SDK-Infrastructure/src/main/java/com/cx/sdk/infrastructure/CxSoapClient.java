@@ -161,15 +161,15 @@ public class CxSoapClient {
     }
 
     private URL replaceHostName(String url) {
-        String host = System.getProperty("cx.host").trim();
+        String host = System.getProperty("cx.host");
         URL origUrl = null;
         try {
             origUrl = new URL(url);
-            if (isEmpty(host) || origUrl.getHost().equalsIgnoreCase(host)) {
+            if (isEmpty(host) || origUrl.getHost().equalsIgnoreCase(host.trim())) {
                 return origUrl;
             }
 
-            return new URL(origUrl.getProtocol(), host, origUrl.getPort(), origUrl.getPath());
+            return new URL(origUrl.getProtocol(), host.trim(), origUrl.getPort(), origUrl.getPath());
         } catch (Exception ex) {
             logger.error("Replacing hostname failed: " + ex.getMessage());
             return origUrl;

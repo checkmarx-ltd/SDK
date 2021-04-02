@@ -6,6 +6,7 @@ import com.cx.sdk.domain.enums.LoginType;
 import com.cx.sdk.domain.exceptions.SdkException;
 import com.cx.sdk.infrastructure.authentication.kerberos.WindowsAuthenticator;
 import com.cx.sdk.infrastructure.proxy.ConnectionFactory;
+import org.glassfish.jersey.CommonProperties;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ public class CxRestClient {
     public CxRestClient(SDKConfigurationProvider sdkConfigurationProvider) {
         this.sdkConfigurationProvider = sdkConfigurationProvider;
         ClientConfig clientConfig = new ClientConfig(getConnectionProvider());
+        clientConfig.property(CommonProperties.FEATURE_AUTO_DISCOVERY_DISABLE, true);
         client = ClientBuilder.newClient(clientConfig);
     }
 
@@ -58,7 +60,7 @@ public class CxRestClient {
     }
 
     public Map<String, String> ssoLogin() throws Exception {
-
+        logger.info("Requesting SSO Login to: " + url);
         Response response = baseRequest(url).post(Entity.text(" "));
 
         validateResponse(response);
@@ -71,15 +73,15 @@ public class CxRestClient {
         String request = "{\"userName\":\"%s\", \"password\":\"%s\"}";
 
         userName = validateUserName(userName);
-        logger.info("[MasterCard] Request URL: " + url);
-        logger.info("[MasterCard] Request payload: " + String.format(request, userName, "*********"));
+        logger.info("Request URL: " + url);
+        logger.info("Request payload: " + String.format(request, userName, "*********"));
 
         Response response = baseRequest(url)
                 .accept("application/json")
                 .post(Entity.entity(String.format(request, userName, password), MediaType.APPLICATION_JSON));
 
-        logger.info("[MasterCard] Login response status: " + response.getStatus());
-        logger.info("[MasterCard] Login response message: " + response.readEntity(String.class));
+        logger.info("Login response status: " + response.getStatus());
+        logger.info("Login response message: " + response.readEntity(String.class));
         validateResponse(response);
 
         return extractCxCookies(response);
@@ -87,7 +89,7 @@ public class CxRestClient {
 
     private String validateUserName(String username) {
         if (username.contains("/") || username.contains("\\")) {
-            return username.replaceAll("[/\\\\\\\\]","\\\\\\\\");
+            return username.replaceAll("[/\\\\\\\\]", "\\\\\\\\");
         }
         return username;
     }
