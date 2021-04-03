@@ -197,8 +197,6 @@ public class CxServerImpl implements ICxServer {
         HttpResponse userInfoResponse = null;
         Permissions permissions = null;
         try {
-            headers.add(new BasicHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken));
-            headers.add(new BasicHeader("Content-Length", "0"));
             HttpClientBuilder builder = HttpClientBuilder.create();
 
             //Add using proxy
