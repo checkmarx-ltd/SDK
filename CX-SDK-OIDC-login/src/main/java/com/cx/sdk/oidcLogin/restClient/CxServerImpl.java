@@ -198,8 +198,8 @@ public class CxServerImpl implements ICxServer {
             disableCertificateValidation(builder);
             client = builder.setDefaultHeaders(headers).build();
             postRequest = RequestBuilder.post()
-                    .addHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken)
-                    .addHeader("Content-Length", "0")
+                    //.addHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken)
+                   // .addHeader("Content-Length", "0")
                     .setUri(userInfoURL)
                     .build();
             userInfoResponse = client.execute(postRequest);
