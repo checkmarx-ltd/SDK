@@ -99,10 +99,10 @@ public class CxServerImpl implements ICxServer {
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultHeaders(headers);
         setSSLTls(builder, "TLSv1.2");
         disableCertificateValidation(builder);
-        if(!isCustomProxySet(proxyParams))
+        if (!isCustomProxySet(proxyParams))
             builder.useSystemProperties();
         else
-            setCustomProxy(builder,proxyParams);
+            setCustomProxy(builder, proxyParams);
         client = builder.build();
     }
 
@@ -128,7 +128,7 @@ public class CxServerImpl implements ICxServer {
             request = RequestBuilder
                     .get()
                     .setUri(versionURL)
-                    .setHeader("cxOrigin",clientName)
+                    .setHeader("cxOrigin", clientName)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                     .build();
             response = client.execute(request);
@@ -197,17 +197,18 @@ public class CxServerImpl implements ICxServer {
         try {
             HttpClientBuilder builder = HttpClientBuilder.create();
 
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
+
+            logger.debug("Access token: " + accessToken);
+            logger.info("User info request: " + userInfoURL);
 
             setSSLTls(builder, "TLSv1.2");
             disableCertificateValidation(builder);
             client = builder.setDefaultHeaders(headers).build();
-            postRequest = RequestBuilder.post()
-                    .addHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken)
-                    .addHeader("Content-Length", "0")
+            postRequest = RequestBuilder.get()
                     .setUri(userInfoURL)
                     .build();
             userInfoResponse = client.execute(postRequest);
@@ -244,7 +245,7 @@ public class CxServerImpl implements ICxServer {
                 } else if (responseBody.contains("\"error\":\"invalid_grant\"")) {
                     throw new CxValidateResponseException(message);
                 } else {
-                    throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message:" + responseBody);
+                    throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message: " + responseBody);
                 }
             }
         } catch (IOException e) {
@@ -278,10 +279,10 @@ public class CxServerImpl implements ICxServer {
             }).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
         }
@@ -299,11 +300,11 @@ public class CxServerImpl implements ICxServer {
         }
     }
 
-    private boolean isEmpty(String s){
+    private boolean isEmpty(String s) {
         return s == null || s.isEmpty();
     }
 
-    private boolean isCustomProxySet(ProxyParams proxyConfig){
+    private boolean isCustomProxySet(ProxyParams proxyConfig) {
         return proxyConfig != null &&
                 proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
                 proxyConfig.getPort() != 0;
