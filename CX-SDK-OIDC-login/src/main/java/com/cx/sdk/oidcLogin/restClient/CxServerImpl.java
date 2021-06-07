@@ -99,10 +99,10 @@ public class CxServerImpl implements ICxServer {
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultHeaders(headers);
         setSSLTls(builder, "TLSv1.2");
         disableCertificateValidation(builder);
-        if(!isCustomProxySet(proxyParams))
+        if (!isCustomProxySet(proxyParams))
             builder.useSystemProperties();
         else
-            setCustomProxy(builder,proxyParams);
+            setCustomProxy(builder, proxyParams);
         client = builder.build();
     }
 
@@ -111,29 +111,40 @@ public class CxServerImpl implements ICxServer {
     }
 
     public String getCxVersion() {
+        logger.info("Checking SAST Server version");
         HttpResponse response;
         HttpUriRequest request;
         String version;
         HttpClientBuilder builder = HttpClientBuilder.create();
         try {
-
-            if(!isCustomProxySet(proxyParams))
+            logger.info("Is using Proxy?");
+            if (!isCustomProxySet(proxyParams)) {
+                logger.info("No");
                 builder.useSystemProperties();
-            else
-                setCustomProxy(builder,proxyParams);
-
+            } else {
+                logger.info("Yes");
+                setCustomProxy(builder, proxyParams);
+                logger.info("USING next Proxy Server URL " + proxyParams.getServer());
+                logger.info("USING next Proxy Type " + proxyParams.getType());
+                logger.info("USING next Proxy port " + proxyParams.getPort());
+            }
             //Add proxy to request
+            logger.info("Setting headers for a HttpClientBuilder");
             client = builder.setDefaultHeaders(headers).build();
-
+            logger.info("Setting HttpClient.");
             request = RequestBuilder
                     .get()
                     .setUri(versionURL)
-                    .setHeader("cxOrigin",clientName)
+                    .setHeader("cxOrigin", clientName)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                     .build();
+            logger.info("Building HttpUriRequest");
             response = client.execute(request);
+            logger.info("Got response");
             validateResponse(response, 200, GET_VERSION_ERROR);
+            logger.info("Validate response");
             version = new BasicResponseHandler().handleResponse(response);
+            logger.info("Sast version is: " + version);
         } catch (IOException | CxValidateResponseException e) {
             version = "Pre 9.0";
         }
@@ -197,10 +208,10 @@ public class CxServerImpl implements ICxServer {
         try {
             HttpClientBuilder builder = HttpClientBuilder.create();
 
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
 
             setSSLTls(builder, "TLSv1.2");
             disableCertificateValidation(builder);
@@ -278,10 +289,10 @@ public class CxServerImpl implements ICxServer {
             }).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
         }
@@ -299,11 +310,11 @@ public class CxServerImpl implements ICxServer {
         }
     }
 
-    private boolean isEmpty(String s){
+    private boolean isEmpty(String s) {
         return s == null || s.isEmpty();
     }
 
-    private boolean isCustomProxySet(ProxyParams proxyConfig){
+    private boolean isCustomProxySet(ProxyParams proxyConfig) {
         return proxyConfig != null &&
                 proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
                 proxyConfig.getPort() != 0;
