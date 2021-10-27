@@ -71,7 +71,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
         return response;
     }
-
+    
     private void initBrowser(String restUrl) {
         if (Environment.isMac()) {
           logger.info("Run On MAC");
@@ -81,6 +81,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
         Engine engine = Engine.newInstance(
             EngineOptions.newBuilder(RenderingMode.HARDWARE_ACCELERATED)
+            	.licenseKey("1BNDHFSC1G0Q2KGCY5QPJXJLZP3ENA0PVFNNF0E9KY6CLEMYB695HED4HO6XKJOR825V3L")
                 .addSwitch("--disable-google-traffic").build());
 
         contentPane = new JPanel(new GridLayout(1, 1));
@@ -148,7 +149,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     public void logout(String idToken) {
         
         Engine engine = Engine.newInstance(
-            EngineOptions.newBuilder(RenderingMode.HARDWARE_ACCELERATED).build());
+            EngineOptions.newBuilder(RenderingMode.HARDWARE_ACCELERATED)
+            .licenseKey("1BNDHFSC1G0Q2KGCY5QPJXJLZP3ENA0PVFNNF0E9KY6CLEMYB695HED4HO6XKJOR825V3L")
+            .build());
         Browser browser = engine.newBrowser();
         browser.navigation().loadUrl(endSessionEndPoint + String
             .format(END_SESSION_FORMAT, idToken, serverUrl + "/cxwebclient/"));
