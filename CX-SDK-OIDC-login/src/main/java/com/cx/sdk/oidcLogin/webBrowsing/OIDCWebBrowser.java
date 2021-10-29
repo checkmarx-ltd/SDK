@@ -54,6 +54,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     private final Logger logger = LoggerFactory.getLogger(OIDCWebBrowser.class);
 
     public OIDCWebBrowser(ProxyParams proxyParams) {
+    	logger.info(proxyParams.username + "************** ------------> " + proxyParams.username);
         this.proxyParams = proxyParams;
     }
 
@@ -89,16 +90,21 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
         engine.network().set(BeforeStartTransactionCallback.class,
             params -> BeforeStartTransactionCallback.Response
-                .override(Arrays.asList(HttpHeader.of("cxOrigin", clientName))));
+            .override(Arrays.asList(HttpHeader.of("cxOrigin", clientName))));
 
         engine.network().set(AuthenticateCallback.class, (params, tell) -> {
-
+          logger.info("params -----------------> " + params);
+          logger.info("tell -------------------> " + tell);
+          logger.info("proxyParams -------------------> " + proxyParams);
           if (params.isProxy() && proxyParams != null) {
             logger.info("Login with Proxy");
             tell.authenticate(proxyParams.getUsername(), proxyParams.getPassword());
             logger.info("Proxy username: " + proxyParams.getUsername());
 
           } else {
+        	logger.info("login no Proxy -----------------> " + params);
+              
+        	//tell.authenticate("admin@cx", "Cx123456!");
             // *******************************************************************
             // super.onAuthRequired(params);
           }
@@ -109,8 +115,8 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         Browser browser = engine.newBrowser();
         String postData = getPostData();
         logger.info("Print PostData: " + postData);
-        LoadUrlParams urlParams =
-            LoadUrlParams.newBuilder(restUrl).postData(postData).build();// new LoadURLParams(restUrl, postData);
+        LoadUrlParams urlParams = LoadUrlParams.newBuilder(restUrl + "?" + postData)
+                .build();
         String pathToImage = "/checkmarxIcon.jpg";
         setIconImage(
             new ImageIcon(getClass().getResource(pathToImage), "checkmarx icon")
