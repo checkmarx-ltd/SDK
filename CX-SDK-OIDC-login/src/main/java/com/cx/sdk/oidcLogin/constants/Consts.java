@@ -6,6 +6,7 @@ public class Consts {
     public static final String CLIENT_VALUE = "ide_client";
     public static final String SCOPE_KEY = "scope";
     public static final String CODE_KEY = "code";
+    public static final String URL_CODE_KEY = "code=";
     public static final String GRANT_TYPE_KEY = "grant_type";
     public static final String AUTHORIZATION_CODE_GRANT_TYPE = "authorization_code";
     public static final String REFRESH_TOKEN = "refresh_token";
