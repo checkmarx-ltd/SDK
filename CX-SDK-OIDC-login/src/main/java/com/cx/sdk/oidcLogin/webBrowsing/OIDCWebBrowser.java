@@ -283,13 +283,4 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         browser.close();
     }
 
-    public static void main(String[] args) throws Exception {
-
-        OIDCWebBrowser oidcWebBrowser = new OIDCWebBrowser(null);
-        AuthenticationData authenticationData = oidcWebBrowser.browseAuthenticationData("http://sast-pi-1546.rnd.local", "cx-intellij");
-
-        System.out.println(authenticationData.code);
-        System.out.println("Done");
-    }
-
 }
