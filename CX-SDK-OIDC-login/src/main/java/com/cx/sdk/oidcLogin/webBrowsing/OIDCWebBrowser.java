@@ -41,6 +41,7 @@ import static javax.swing.JOptionPane.OK_OPTION;
 public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
     public static final String END_SESSION_FORMAT = "?id_token_hint=%s&post_logout_redirect_uri=%s";
+    public static final String LICENSE_KEY = "1BNDHFSC1G0Q2KGCY5QPJXJLZP3ENA0PVFNNF0E9KY6CLEMYB695HED4HO6XKJOR825V3L";
     private String clientName;
     private JPanel contentPane;
     private String error;
@@ -58,6 +59,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     public OIDCWebBrowser(ProxyParams proxyParams) {
         this.proxyParams = proxyParams;
     }
+    
     @Override
     public AuthenticationData browseAuthenticationData(String serverUrl, String clientName) throws Exception {
         logger.info("AuthenticationData initializing.. ");
@@ -86,10 +88,6 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         if (isMac()) {
             System.setProperty("java.ipc.external", "true");
             System.setProperty("jxbrowser.ipc.external", "true");
-
-            /*if (!BrowserCore.isInitialized()) {
-                BrowserCore.initialize();
-            }*/
         }
 
         contentPane = new JPanel(new GridLayout(1, 1));
@@ -97,10 +95,10 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
         Engine engine = defaultEngine();
 
-        engine.network().set(BeforeSendHeadersCallback.class, params -> {
+        engine.network().set(BeforeStartTransactionCallback.class, params -> {
             List<HttpHeader> headersList = new ArrayList<>(params.httpHeaders());
             headersList.add(HttpHeader.of("cxOrigin", clientName));
-            return BeforeSendHeadersCallback.Response.override(headersList);
+            return BeforeStartTransactionCallback.Response.override(headersList);
         });
 
         engine.network().set(AuthenticateCallback.class, createAuthenticationPopup(this));
@@ -150,11 +148,12 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     public static Engine defaultEngine() {
-        if (ENGINE == null || ENGINE.isClosed()) {
+    	if (ENGINE == null || ENGINE.isClosed()) {
             ENGINE = Engine.newInstance(EngineOptions
                     .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
                     .addSwitch("--disable-google-traffic")
+                    .licenseKey(LICENSE_KEY)
                     .build());
             ENGINE.network().set(CanGetCookiesCallback.class, params -> CanGetCookiesCallback.Response.can());
             ENGINE.network().set(CanSetCookieCallback.class, params ->
