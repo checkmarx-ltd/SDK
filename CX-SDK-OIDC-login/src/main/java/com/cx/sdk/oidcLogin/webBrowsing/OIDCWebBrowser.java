@@ -1,5 +1,32 @@
 package com.cx.sdk.oidcLogin.webBrowsing;
 
+import static com.teamdev.jxbrowser.os.Environment.isMac;
+import static javax.swing.JOptionPane.OK_OPTION;
+
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.cx.sdk.domain.entities.ProxyParams;
 import com.cx.sdk.oidcLogin.constants.Consts;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
@@ -13,35 +40,21 @@ import com.teamdev.jxbrowser.engine.EngineOptions;
 import com.teamdev.jxbrowser.engine.RenderingMode;
 import com.teamdev.jxbrowser.event.Observer;
 import com.teamdev.jxbrowser.frame.Frame;
-import com.teamdev.jxbrowser.navigation.LoadUrlParams;
 import com.teamdev.jxbrowser.navigation.event.FrameLoadFinished;
 import com.teamdev.jxbrowser.net.HttpHeader;
-import com.teamdev.jxbrowser.net.callback.*;
-import com.teamdev.jxbrowser.os.Environment;
+import com.teamdev.jxbrowser.net.callback.AuthenticateCallback;
+import com.teamdev.jxbrowser.net.callback.BeforeStartTransactionCallback;
+import com.teamdev.jxbrowser.net.callback.CanGetCookiesCallback;
+import com.teamdev.jxbrowser.net.callback.CanSetCookieCallback;
+import com.teamdev.jxbrowser.net.callback.VerifyCertificateCallback;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static com.teamdev.jxbrowser.os.Environment.isMac;
-import static javax.swing.JOptionPane.OK_OPTION;
+import teamdev.license.JxBrowserLicense;
 
 public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
-    public static final String END_SESSION_FORMAT = "?id_token_hint=%s&post_logout_redirect_uri=%s";
-    public static final String LICENSE_KEY = "1BNDHFSC1G0Q2KGCY5QPJXJLZP3ENA0PVFNNF0E9KY6CLEMYB695HED4HO6XKJOR825V3L";
+    private static final long serialVersionUID = 7556445550254687628L;
+	public static final String END_SESSION_FORMAT = "?id_token_hint=%s&post_logout_redirect_uri=%s";
     private String clientName;
     private JPanel contentPane;
     private String error;
@@ -153,7 +166,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
                     .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
                     .addSwitch("--disable-google-traffic")
-                    .licenseKey(LICENSE_KEY)
+                    .licenseKey(JxBrowserLicense.getLicense())
                     .build());
             ENGINE.network().set(CanGetCookiesCallback.class, params -> CanGetCookiesCallback.Response.can());
             ENGINE.network().set(CanSetCookieCallback.class, params ->

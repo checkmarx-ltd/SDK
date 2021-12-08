@@ -27,6 +27,10 @@
             <id>com.teamdev</id>
             <url>https://europe-maven.pkg.dev/jxbrowser/releases</url>
         </repository>
+        <repository>
+        	<id>teamdev.license</id>
+        	<url>http://cx-artifactory.dm.cx:8082/artifactory/libs-release-local</url>
+        </repository>
     </repositories>
 
     <properties>
@@ -53,14 +57,6 @@
             <groupId>com.teamdev.jxbrowser</groupId>
             <artifactId>jxbrowser-swing</artifactId>
             <version>${teamdev.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-cross-platform</artifactId>
-            <version>${teamdev.version}</version>
-            <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -94,6 +90,11 @@
             <version>2.13</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+			<groupId>teamdev.license</groupId>
+			<artifactId>jxbrowser-license</artifactId>
+			<version>${teamdev.version}</version>
+		</dependency>
     </dependencies>
 
 
