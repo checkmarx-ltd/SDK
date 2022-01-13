@@ -32,8 +32,8 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.apache.log4j.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
@@ -68,7 +68,7 @@ public class CxServerImpl implements ICxServer {
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
     private static final String INFO_FAILED = "User info failed";
     private final ProxyParams proxyParams;
-    private final Logger logger = Logger.getLogger("com.checkmarx.plugin.common.CxServerImpl");
+    private final Logger logger = LoggerFactory.getLogger("com.checkmarx.plugin.common.CxServerImpl");
 
 
     public CxServerImpl(String serverURL) {
