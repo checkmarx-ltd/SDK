@@ -98,16 +98,19 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private void initBrowser(String restUrl) {
+    	logger.info("Entering into OIDCWebBrowser.initBrowser method");
+    	logger.info("Parameter to initBrowser method restUrl:"+restUrl);
         if (isMac()) {
             System.setProperty("java.ipc.external", "true");
             System.setProperty("jxbrowser.ipc.external", "true");
         }
 
         contentPane = new JPanel(new GridLayout(1, 1));
+        logger.info("ContentPane after initializing:"+contentPane);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         Engine engine = defaultEngine();
-
+        logger.info("Engine after defaultEngine initializing:"+engine);
         engine.network().set(BeforeStartTransactionCallback.class, params -> {
             List<HttpHeader> headersList = new ArrayList<>(params.httpHeaders());
             headersList.add(HttpHeader.of("cxOrigin", clientName));
@@ -115,12 +118,13 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         });
 
         engine.network().set(AuthenticateCallback.class, createAuthenticationPopup(this));
-
+        logger.info("Engine after network set:"+engine);
 
         browser = engine.newBrowser();
         browser.navigation().on(FrameLoadFinished.class, AddResponsesHandler());
-
+        logger.info("browser after navigation:"+browser);
         String postData = getPostData();
+        logger.info("postData value:"+postData);
         String pathToImage = "/checkmarxIcon.jpg";
         setIconImage(new ImageIcon(getClass().getResource(pathToImage), "checkmarx icon").getImage());
 
@@ -148,6 +152,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             setVisible(true);
         });
         browser.navigation().loadUrlAndWait(restUrl + "?" + postData);
+        logger.info("browser after navigation loadUrlAndWait:"+browser);
+        logger.info("Leaving from OIDCWebBrowser.initBrowser method");
+        
     }
 
     private static void close() {
