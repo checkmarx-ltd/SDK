@@ -88,8 +88,10 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         initBrowser(authorizationEndpointUrl);
         logger.info("Finish initBrowser");
         logger.info("Start waiting to Authentication.");
+        logger.info("Before waitForAuthentication ENGINE :"+Thread.currentThread());
         waitForAuthentication();
         logger.info("Finish waiting for Authentication.");
+        close();
         if (hasErrors()) {
             throw new CxRestLoginException(error);
         }
@@ -139,7 +141,8 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    close();
+                    logger.info("windowClosing ENGINE:"+Thread.currentThread());
+                    //close();
                     if (response == null) {
                         response = new AuthenticationData(true);
                     }
@@ -380,7 +383,18 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private void closePopup() {
+        logger.info("Dispatching WINDOW_CLOSING event.");
         dispatchEvent(new WindowEvent(OIDCWebBrowser.this, WindowEvent.WINDOW_CLOSING));
+        /**
+
+        logger.info("Closing the ENGINE."+ Thread.currentThread());
+        close();
+        if (response == null) {
+            response = new AuthenticationData(true);
+        }
+        logger.info("Notifying waiter after closing the ENGINE.");
+        notifyAuthenticationFinish();
+*/
     }
 
     @Override
