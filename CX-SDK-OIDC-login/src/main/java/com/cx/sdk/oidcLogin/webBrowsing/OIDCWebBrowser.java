@@ -88,8 +88,13 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         initBrowser(authorizationEndpointUrl);
         logger.info("Finish initBrowser");
         logger.info("Start waiting to Authentication.");
+        logger.info("Before waitForAuthentication ENGINE :"+Thread.currentThread());
         waitForAuthentication();
         logger.info("Finish waiting for Authentication.");
+        //On MacOS as well as on windows, browser should be closed on the same application thread.
+        //This changes was needed after Jxbrowser upgrade from 7.5  to 7.20
+        close();
+        logger.info("Browser closed successfully.");
         if (hasErrors()) {
             throw new CxRestLoginException(error);
         }
@@ -98,29 +103,28 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private void initBrowser(String restUrl) {
+    	logger.info("Entering into OIDCWebBrowser.initBrowser method");
+    	logger.info("Parameter to initBrowser method restUrl:"+restUrl);
         if (isMac()) {
             System.setProperty("java.ipc.external", "true");
             System.setProperty("jxbrowser.ipc.external", "true");
         }
 
-        contentPane = new JPanel(new GridLayout(1, 1));
+        contentPane = new JPanel(new GridLayout(1, 1));        
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        Engine engine = defaultEngine();
-
+        Engine engine = defaultEngine();        
         engine.network().set(BeforeStartTransactionCallback.class, params -> {
             List<HttpHeader> headersList = new ArrayList<>(params.httpHeaders());
             headersList.add(HttpHeader.of("cxOrigin", clientName));
             return BeforeStartTransactionCallback.Response.override(headersList);
         });
-
         engine.network().set(AuthenticateCallback.class, createAuthenticationPopup(this));
-
-
+        
         browser = engine.newBrowser();
         browser.navigation().on(FrameLoadFinished.class, AddResponsesHandler());
-
         String postData = getPostData();
+        logger.info("Authentication request data:"+postData);
         String pathToImage = "/checkmarxIcon.jpg";
         setIconImage(new ImageIcon(getClass().getResource(pathToImage), "checkmarx icon").getImage());
 
@@ -135,10 +139,11 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    close();
+                    logger.debug("windowClosing  event is received. ThreadId :"+Thread.currentThread());
                     if (response == null) {
                         response = new AuthenticationData(true);
                     }
+                    logger.debug("Notifying the application thread. ThreadId :"+Thread.currentThread());
                     notifyAuthenticationFinish();
                 }
             });
@@ -147,7 +152,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             getContentPane().add(contentPane, BorderLayout.CENTER);
             setVisible(true);
         });
-        browser.navigation().loadUrlAndWait(restUrl + "?" + postData);
+        browser.navigation().loadUrlAndWait(restUrl + "?" + postData);        
+        logger.info("Leaving from OIDCWebBrowser.initBrowser method");
+        
     }
 
     private static void close() {
@@ -373,6 +380,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private void closePopup() {
+        logger.info("Dispatching WINDOW_CLOSING event.");
         dispatchEvent(new WindowEvent(OIDCWebBrowser.this, WindowEvent.WINDOW_CLOSING));
     }
 
