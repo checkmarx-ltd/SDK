@@ -1,32 +1,5 @@
 package com.cx.sdk.oidcLogin.webBrowsing;
 
-import static com.teamdev.jxbrowser.os.Environment.isMac;
-import static javax.swing.JOptionPane.OK_OPTION;
-
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cx.sdk.domain.entities.ProxyParams;
 import com.cx.sdk.oidcLogin.constants.Consts;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
@@ -42,19 +15,33 @@ import com.teamdev.jxbrowser.event.Observer;
 import com.teamdev.jxbrowser.frame.Frame;
 import com.teamdev.jxbrowser.navigation.event.FrameLoadFinished;
 import com.teamdev.jxbrowser.net.HttpHeader;
-import com.teamdev.jxbrowser.net.callback.AuthenticateCallback;
-import com.teamdev.jxbrowser.net.callback.BeforeStartTransactionCallback;
-import com.teamdev.jxbrowser.net.callback.CanGetCookiesCallback;
-import com.teamdev.jxbrowser.net.callback.CanSetCookieCallback;
-import com.teamdev.jxbrowser.net.callback.VerifyCertificateCallback;
+import com.teamdev.jxbrowser.net.callback.*;
+import com.teamdev.jxbrowser.net.proxy.AutoDetectProxyConfig;
+import com.teamdev.jxbrowser.net.proxy.CustomProxyConfig;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import teamdev.license.JxBrowserLicense;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.teamdev.jxbrowser.os.Environment.isMac;
+import static javax.swing.JOptionPane.OK_OPTION;
 
 public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
     private static final long serialVersionUID = 7556445550254687628L;
-	public static final String END_SESSION_FORMAT = "?id_token_hint=%s&post_logout_redirect_uri=%s";
+    public static final String END_SESSION_FORMAT = "?id_token_hint=%s&post_logout_redirect_uri=%s";
     private String clientName;
     private JPanel contentPane;
     private String error;
@@ -65,14 +52,14 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     private String serverUrl;
     private String endSessionEndPoint;
     public static Engine ENGINE;
-    private final Logger logger = LoggerFactory.getLogger(OIDCWebBrowser.class);
+    private static final Logger logger = LoggerFactory.getLogger(OIDCWebBrowser.class);
 
     private ProxyParams proxyParams;
 
     public OIDCWebBrowser(ProxyParams proxyParams) {
         this.proxyParams = proxyParams;
     }
-    
+
     @Override
     public AuthenticationData browseAuthenticationData(String serverUrl, String clientName) throws Exception {
         logger.info("AuthenticationData initializing.. ");
@@ -88,7 +75,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         initBrowser(authorizationEndpointUrl);
         logger.info("Finish initBrowser");
         logger.info("Start waiting to Authentication.");
-        logger.info("Before waitForAuthentication ENGINE :"+Thread.currentThread());
+        logger.info("Before waitForAuthentication ENGINE :" + Thread.currentThread());
         waitForAuthentication();
         logger.info("Finish waiting for Authentication.");
         //On MacOS as well as on windows, browser should be closed on the same application thread.
@@ -103,28 +90,47 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private void initBrowser(String restUrl) {
-    	logger.info("Entering into OIDCWebBrowser.initBrowser method");
-    	logger.info("Parameter to initBrowser method restUrl:"+restUrl);
+        logger.info("Entering into OIDCWebBrowser.initBrowser method");
+        logger.info("Parameter to initBrowser method restUrl:" + restUrl);
         if (isMac()) {
             System.setProperty("java.ipc.external", "true");
             System.setProperty("jxbrowser.ipc.external", "true");
         }
 
-        contentPane = new JPanel(new GridLayout(1, 1));        
+        contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        Engine engine = defaultEngine();        
+        Engine engine = defaultEngine();
         engine.network().set(BeforeStartTransactionCallback.class, params -> {
             List<HttpHeader> headersList = new ArrayList<>(params.httpHeaders());
             headersList.add(HttpHeader.of("cxOrigin", clientName));
             return BeforeStartTransactionCallback.Response.override(headersList);
         });
+        if (proxyParams != null) {
+            if (proxyParams.isHostPortExist()) {
+                String proxyRules = proxyParams.getServer() + ":" + proxyParams.getPort();
+                engine.proxy().config(CustomProxyConfig.newInstance(proxyRules));
+            } else {
+                engine.proxy().config(AutoDetectProxyConfig.newInstance());
+            }
+
+            if (proxyParams.isBasicAuth()) {
+                engine.network().set(AuthenticateCallback.class, (params, tell) -> {
+                            if (params.isProxy()) {
+                                tell.authenticate(proxyParams.getUsername(), proxyParams.getPassword());
+                            } else {
+                                tell.cancel();
+                            }
+                        }
+                );
+            }
+        }
         engine.network().set(AuthenticateCallback.class, createAuthenticationPopup(this));
-        
+
         browser = engine.newBrowser();
         browser.navigation().on(FrameLoadFinished.class, AddResponsesHandler());
         String postData = getPostData();
-        logger.info("Authentication request data:"+postData);
+        logger.info("Authentication request data:" + postData);
         String pathToImage = "/checkmarxIcon.jpg";
         setIconImage(new ImageIcon(getClass().getResource(pathToImage), "checkmarx icon").getImage());
 
@@ -139,11 +145,11 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    logger.debug("windowClosing  event is received. ThreadId :"+Thread.currentThread());
+                    logger.debug("windowClosing  event is received. ThreadId :" + Thread.currentThread());
                     if (response == null) {
                         response = new AuthenticationData(true);
                     }
-                    logger.debug("Notifying the application thread. ThreadId :"+Thread.currentThread());
+                    logger.debug("Notifying the application thread. ThreadId :" + Thread.currentThread());
                     notifyAuthenticationFinish();
                 }
             });
@@ -152,9 +158,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             getContentPane().add(contentPane, BorderLayout.CENTER);
             setVisible(true);
         });
-        browser.navigation().loadUrlAndWait(restUrl + "?" + postData);        
+        browser.navigation().loadUrlAndWait(restUrl + "?" + postData);
         logger.info("Leaving from OIDCWebBrowser.initBrowser method");
-        
+
     }
 
     private static void close() {
@@ -168,7 +174,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     public static Engine defaultEngine() {
-    	if (ENGINE == null || ENGINE.isClosed()) {
+        if (ENGINE == null || ENGINE.isClosed()) {
             ENGINE = Engine.newInstance(EngineOptions
                     .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
@@ -186,32 +192,26 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
     private AuthenticateCallback createAuthenticationPopup(java.awt.Frame frame) {
         return (params, tell) -> SwingUtilities.invokeLater(() -> {
-            if (params.isProxy() && proxyParams != null) {
-                tell.authenticate(proxyParams.getUsername(),proxyParams.getPassword());
+            JPanel userPanel = new JPanel();
+            userPanel.setLayout(new GridLayout(2, 2));
+            JLabel usernameLabel = new JLabel("Username:");
+            JLabel passwordLabel = new JLabel("Password:");
+            JTextField username = new JTextField();
+            JPasswordField password = new JPasswordField();
+            userPanel.add(usernameLabel);
+            userPanel.add(username);
+            userPanel.add(passwordLabel);
+            userPanel.add(password);
+            int input = JOptionPane.showConfirmDialog(frame, userPanel,
+                    String.format("Server :%s require username and password,Enter your credentials:", params.url()),
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (input == OK_OPTION) {
+                // Authenticate with the particular username and password
+                tell.authenticate(username.getText(), new String(password.getPassword()));
+            } else {
+                // Otherwise cancel the authentication.
+                tell.cancel();
             }
-            else {
-                JPanel userPanel = new JPanel();
-                userPanel.setLayout(new GridLayout(2, 2));
-                JLabel usernameLabel = new JLabel("Username:");
-                JLabel passwordLabel = new JLabel("Password:");
-                JTextField username = new JTextField();
-                JPasswordField password = new JPasswordField();
-                userPanel.add(usernameLabel);
-                userPanel.add(username);
-                userPanel.add(passwordLabel);
-                userPanel.add(password);
-                int input = JOptionPane.showConfirmDialog(frame, userPanel,
-                        String.format("Server :%s require username and password,Enter your credentials:",params.url()),
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                if (input == OK_OPTION) {
-                    // Authenticate with the particular username and password
-                    tell.authenticate(username.getText(), new String(password.getPassword()));
-                } else {
-                    // Otherwise cancel the authentication.
-                    tell.cancel();
-                }
-            }
-
         });
     }
 
@@ -368,6 +368,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     private void handleResponse(FrameLoadFinished event) {
         if (event.frame().isMain() && (validateUrlResponse(event)) && !hasErrors()) {
             String validatedURL = event.url();
+            logger.info("[CHECKMARX] - Frame load finish URL: " + validatedURL);
             extractReturnedUrlParams(validatedURL);
             response = new AuthenticationData(urlParamsMap.get(Consts.CODE_KEY));
         }

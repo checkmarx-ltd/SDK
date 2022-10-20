@@ -65,7 +65,7 @@ public class CxServerImpl implements ICxServer {
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
     private static final String INFO_FAILED = "User info failed";
 
-    private final Logger logger = Logger.getLogger("com.checkmarx.plugin.common.CxServerImpl");
+    private static final Logger logger = Logger.getLogger("com.checkmarx.plugin.common.CxServerImpl");
 
 
     public CxServerImpl(String serverURL) {
@@ -248,6 +248,7 @@ public class CxServerImpl implements ICxServer {
                 if (responseBody.contains("<!DOCTYPE html>")) {
                     throw new CxValidateResponseException(message + ": " + "status code: 500. Error message: Internal Server Error");
                 } else if (responseBody.contains("\"error\":\"invalid_grant\"")) {
+                    logger.error("[CHECKMARX] - Fail to validate response, response: " + responseBody);
                     throw new CxValidateResponseException(message);
                 } else {
                     throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message:" + responseBody);
