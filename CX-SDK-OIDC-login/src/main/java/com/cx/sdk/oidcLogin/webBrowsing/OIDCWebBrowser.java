@@ -74,6 +74,11 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         BrowserContext browserContext = BrowserContext.defaultContext();
+        if (proxyParams != null && proxyParams.isHostPortExist()) {
+            String hostPort = proxyParams.getServer() + ":" + proxyParams.getPort();
+            String proxyRules = "http=" + hostPort + ";https=" + hostPort+ ";ftp=" + hostPort+ ";socks=" + hostPort;
+            browserContext.getProxyService().setProxyConfig(new CustomProxyConfig(proxyRules));
+        }
         browserContext.getNetworkService().setNetworkDelegate(new DefaultNetworkDelegate() {
             @Override
             public void onBeforeSendHeaders(BeforeSendHeadersParams params) {
@@ -82,7 +87,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
             @Override
             public boolean onAuthRequired(AuthRequiredParams params) {
-                if (params.isProxy() && proxyParams != null) {
+                if (params.isProxy() && proxyParams != null && proxyParams.isBasicAuth()) {
                     logger.info("Login with Proxy");
                     params.setUsername(proxyParams.getUsername());
                     params.setPassword(proxyParams.getPassword());
@@ -94,7 +99,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             }
         });
 
-        browser = new Browser(BrowserType.LIGHTWEIGHT,browserContext);
+        browser = new Browser(BrowserType.LIGHTWEIGHT, browserContext);
         String postData = getPostData();
         logger.info("Print PostData: " + postData);
         LoadURLParams urlParams = new LoadURLParams(restUrl, postData);

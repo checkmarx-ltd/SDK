@@ -28,12 +28,12 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
@@ -68,7 +68,7 @@ public class CxServerImpl implements ICxServer {
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
     private static final String INFO_FAILED = "User info failed";
     private final ProxyParams proxyParams;
-    private final Logger logger = LoggerFactory.getLogger("com.checkmarx.plugin.common.CxServerImpl");
+    private static final Logger log = LoggerFactory.getLogger(CxServerImpl.class);
 
 
     public CxServerImpl(String serverURL) {
@@ -117,10 +117,10 @@ public class CxServerImpl implements ICxServer {
         HttpClientBuilder builder = HttpClientBuilder.create();
         try {
 
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
 
             //Add proxy to request
             client = builder.setDefaultHeaders(headers).build();
@@ -202,8 +202,8 @@ public class CxServerImpl implements ICxServer {
             else
                 setCustomProxy(builder, proxyParams);
 
-            logger.debug("Access token: " + accessToken);
-            logger.info("User info request: " + userInfoURL);
+            log.debug("Access token: " + accessToken);
+            log.info("User info request: " + userInfoURL);
 
             setSSLTls(builder, "TLSv1.2");
             disableCertificateValidation(builder);
@@ -243,10 +243,13 @@ public class CxServerImpl implements ICxServer {
                 String responseBody = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
                 responseBody = responseBody.replace("{", "").replace("}", "").replace(System.getProperty("line.separator"), " ").replace("  ", "");
                 if (responseBody.contains("<!DOCTYPE html>")) {
+                    log.error(message + ": " + "status code: " + response.getStatusLine());
                     throw new CxValidateResponseException(message + ": " + "status code: 500. Error message: Internal Server Error");
                 } else if (responseBody.contains("\"error\":\"invalid_grant\"")) {
+                    log.error(message + ": " + "status code: " + response.getStatusLine());
                     throw new CxValidateResponseException(message);
                 } else {
+                    log.error(message + ": " + "status code: " + response.getStatusLine() + ". Error message: " + responseBody);
                     throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message: " + responseBody);
                 }
             }
@@ -286,7 +289,7 @@ public class CxServerImpl implements ICxServer {
             else
                 setCustomProxy(builder, proxyParams);
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
-            logger.warn("Failed to disable certificate verification: " + e.getMessage());
+            log.warn("Failed to disable certificate verification: " + e.getMessage());
         }
 
         return builder;
@@ -298,7 +301,7 @@ public class CxServerImpl implements ICxServer {
             sslContext.init(null, null, null);
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            logger.warn("Failed to set SSL TLS : " + e.getMessage());
+            log.warn("Failed to set SSL TLS : " + e.getMessage());
         }
     }
 
@@ -323,7 +326,7 @@ public class CxServerImpl implements ICxServer {
             cb.setDefaultCredentialsProvider(credsProvider);
         }
 
-        logger.info("Setting proxy for Checkmarx http client");
+        log.info("Setting proxy for Checkmarx http client");
         cb.setProxy(proxy);
         cb.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
         cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());

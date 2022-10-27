@@ -8,6 +8,25 @@ public class ProxyParams {
     public String password;
     public String type;
 
+    public ProxyParams() {
+    }
+
+    public ProxyParams(String server, int port, String username, String password, String type) {
+        this.server = server;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.type = type;
+    }
+
+    public boolean isHostPortExist() {
+        return isNotEmpty(server) && port != 0;
+    }
+
+    public boolean isBasicAuth() {
+        return isNotEmpty(username) && isNotEmpty(password);
+    }
+
     public String getServer() {
         return server;
     }
@@ -47,4 +66,13 @@ public class ProxyParams {
     public void setType(String type) {
         this.type = type;
     }
+
+    private boolean isNotEmpty(CharSequence cs) {
+        return !isEmpty(cs);
+    }
+
+    private boolean isEmpty(CharSequence cs) {
+        return cs == null || cs.length() == 0;
+    }
+
 }
