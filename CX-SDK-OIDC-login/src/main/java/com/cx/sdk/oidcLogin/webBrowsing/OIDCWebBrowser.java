@@ -124,8 +124,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
                         }
                 );
             }
+        } else {
+            engine.network().set(AuthenticateCallback.class, createAuthenticationPopup(this));
         }
-        engine.network().set(AuthenticateCallback.class, createAuthenticationPopup(this));
 
         browser = engine.newBrowser();
         browser.navigation().on(FrameLoadFinished.class, AddResponsesHandler());
