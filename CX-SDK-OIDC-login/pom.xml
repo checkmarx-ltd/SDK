@@ -37,6 +37,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <teamdev.version>7.20</teamdev.version>
         <teamdev.license.version>6.23</teamdev.license.version>
+	<jxbrowser.license.version>7.21</jxbrowser.license.version>
     </properties>
 
     <dependencies>
@@ -93,7 +94,7 @@
         <dependency>
 			<groupId>teamdev.license</groupId>
 			<artifactId>jxbrowser-license</artifactId>
-			<version>${teamdev.version}</version>
+			<version>${jxbrowser.license.version}</version>
 		</dependency>
     </dependencies>
 
