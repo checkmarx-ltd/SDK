@@ -18,6 +18,11 @@
     <dependencies>
         <dependency>
             <groupId>com.cx.sdk</groupId>
+            <artifactId>CX-SDK-OIDC-login</artifactId>
+            <version>2.16</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cx.sdk</groupId>
             <artifactId>CX-SDK-Application</artifactId>
             <version>2.16</version>
         </dependency>
