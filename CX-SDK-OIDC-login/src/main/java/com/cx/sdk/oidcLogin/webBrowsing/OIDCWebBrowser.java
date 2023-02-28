@@ -21,7 +21,7 @@ import com.teamdev.jxbrowser.net.proxy.CustomProxyConfig;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import teamdev.license.JxBrowserLicense;_upgrade
+import teamdev.license.JxBrowserLicense;
 
 import javax.swing.*;
 import java.awt.*;
@@ -106,7 +106,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             List<HttpHeader> headersList = new ArrayList<>(params.httpHeaders());
             headersList.add(HttpHeader.of("cxOrigin", clientName));
             return BeforeStartTransactionCallback.Response.override(headersList);
-
+        });
         if (proxyParams != null) {
             if (proxyParams.isHostPortExist()) {
                 String proxyRules = proxyParams.getServer() + ":" + proxyParams.getPort();

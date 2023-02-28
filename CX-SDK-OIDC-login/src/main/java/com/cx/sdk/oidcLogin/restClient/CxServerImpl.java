@@ -46,6 +46,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.cx.sdk.oidcLogin.constants.Consts.*;
@@ -97,7 +98,7 @@ public class CxServerImpl implements ICxServer {
 
     private void setClient() {
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultHeaders(headers);
-        setSSLTls(builder, "TLSv1.2");
+        setSSLTls("TLSv1.2");
         disableCertificateValidation(builder);
         //Add using proxy
         if(!isCustomProxySet(proxyParams))
@@ -337,7 +338,7 @@ public class CxServerImpl implements ICxServer {
         return builder;
     }
 
-    private void setSSLTls(HttpClientBuilder builder, String protocol) {
+    private void setSSLTls(String protocol) {
         try {
             final SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(null, null, null);
@@ -345,32 +346,5 @@ public class CxServerImpl implements ICxServer {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.warn("Failed to set SSL TLS : " + e.getMessage());
         }
-    }
-
-    private boolean isEmpty(String s) {
-        return s == null || s.isEmpty();
-    }
-
-    private boolean isCustomProxySet(ProxyParams proxyConfig) {
-        return proxyConfig != null &&
-                proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
-                proxyConfig.getPort() != 0;
-    }
-
-    private void setCustomProxy(HttpClientBuilder cb, ProxyParams proxyConfig) {
-        String scheme = proxyConfig.getType();
-        HttpHost proxy = new HttpHost(proxyConfig.getServer(), proxyConfig.getPort(), scheme);
-        if (!isEmpty(proxyConfig.getUsername()) &&
-                !isEmpty(proxyConfig.getPassword())) {
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
-            CredentialsProvider credsProvider = new BasicCredentialsProvider();
-            credsProvider.setCredentials(new AuthScope(proxy), credentials);
-            cb.setDefaultCredentialsProvider(credsProvider);
-        }
-
-        logger.info("Setting proxy for Checkmarx http client");
-        cb.setProxy(proxy);
-        cb.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
-        cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
     }
 }
