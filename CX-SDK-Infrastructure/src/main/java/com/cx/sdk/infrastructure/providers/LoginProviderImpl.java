@@ -43,13 +43,14 @@ public class LoginProviderImpl implements LoginProvider {
         this.sdkConfigurationProvider = sdkConfigurationProvider;
         connectionFactory = new ConnectionFactory(sdkConfigurationProvider);
         cxOIDCLoginClient = new CxOIDCLoginClientImpl(sdkConfigurationProvider.getCxServerUrl(),
-                sdkConfigurationProvider.getCxOriginName(), sdkConfigurationProvider.getProxyParams());
+                sdkConfigurationProvider.getCxOriginName(),sdkConfigurationProvider.getProxyParams());
     }
 
 
     @Override
     public Session login() throws SdkException {
         try {
+            logger.info("cxOIDCLoginClient start login");
             loginData = cxOIDCLoginClient.login();
         } catch (Exception e) {
             String errorMessage = String.format("Failed to perform login to server: [%s]\nError: %s",

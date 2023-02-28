@@ -20,6 +20,7 @@ public class TokenHTTPEntityBuilder {
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(Consts.GRANT_TYPE_KEY, Consts.AUTHORIZATION_CODE_GRANT_TYPE));
         urlParameters.add(new BasicNameValuePair(Consts.CLIENT_ID_KEY, Consts.CLIENT_VALUE));
+        urlParameters.add(new BasicNameValuePair(Consts.SCOPE_KEY, Consts.SCOPE_VALUE2));
         urlParameters.add(new BasicNameValuePair(Consts.REDIRECT_URI_KEY, serverURL.endsWith("/") ? serverURL : (serverURL + "/")));
         urlParameters.add(new BasicNameValuePair(Consts.CODE_KEY, code));
 
