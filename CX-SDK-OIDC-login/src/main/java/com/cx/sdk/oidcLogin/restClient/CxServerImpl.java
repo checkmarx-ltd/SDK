@@ -31,6 +31,7 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.net.ssl.HttpsURLConnection;
@@ -67,6 +68,8 @@ public class CxServerImpl implements ICxServer {
     private static final String INFO_FAILED = "User info failed";
 
     private static final Logger logger = LoggerFactory.getLogger(CxServerImpl.class);
+    private final ProxyParams proxyParams;
+
 
 
     public CxServerImpl(String serverURL) {
@@ -118,23 +121,31 @@ public class CxServerImpl implements ICxServer {
         HttpResponse response;
         HttpUriRequest request;
         String version;
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        try {
 
-        request = RequestBuilder
-                .get()
-                .setUri(versionURL)
-                .setHeader("cxOrigin", clientName)
-                .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
-                .build();
+            if(!isCustomProxySet(proxyParams))
+                builder.useSystemProperties();
+            else
+                setCustomProxy(builder,proxyParams);
 
-        logger.debug(" Print Get Version request line\n" + request.getRequestLine());
+            //Add proxy to request
+            client = builder.setDefaultHeaders(headers).build();
 
-        response = client.execute(request);
-        logger.debug("Print Get version response \n" + response.getStatusLine());
-        logger.debug("Print Get Version response \n" + Arrays.toString(response.getAllHeaders()));
-        validateResponse(response, 200, GET_VERSION_ERROR);
-        version = new BasicResponseHandler().handleResponse(response);
-
-
+            request = RequestBuilder
+                    .get()
+                    .setUri(versionURL)
+                    .setHeader("cxOrigin", clientName)
+                    .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
+                    .build();
+            logger.debug(" Print Get Version request line\n" + request.getRequestLine());
+            
+            response = client.execute(request);
+            validateResponse(response, 200, GET_VERSION_ERROR);
+            version = new BasicResponseHandler().handleResponse(response);
+        } catch (IOException | CxValidateResponseException e) {
+            version = "Pre 9.0";
+        }
         return version;
     }
 
@@ -200,18 +211,20 @@ public class CxServerImpl implements ICxServer {
         try {
             HttpClientBuilder builder = HttpClientBuilder.create();
 
-            //Add using proxy
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
-            setSSLTls("TLSv1.2");
+                setCustomProxy(builder, proxyParams);
+
+            logger.debug("Access token: " + accessToken);
+            logger.info("User info request: " + userInfoURL);
+
+            setSSLTls(builder, "TLSv1.2");
             disableCertificateValidation(builder);
             client = builder.setDefaultHeaders(headers).build();
-
-            postRequest = RequestBuilder.post()
-                    .setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
-                    .setHeader("Content-Length","0")
+            postRequest = RequestBuilder.get()
+                    .addHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken)
+                    .addHeader("Content-Length", "0")
                     .setUri(userInfoURL)
                     .build();
             //Add print request
@@ -252,7 +265,7 @@ public class CxServerImpl implements ICxServer {
                     logger.error("[CHECKMARX] - Fail to validate response, response: " + responseBody);
                     throw new CxValidateResponseException(message);
                 } else {
-                    throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message:" + responseBody);
+                    throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message: " + responseBody);
                 }
             }
         } catch (IOException e) {
@@ -331,5 +344,32 @@ public class CxServerImpl implements ICxServer {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.warn("Failed to set SSL TLS : " + e.getMessage());
         }
+    }
+
+    private boolean isEmpty(String s) {
+        return s == null || s.isEmpty();
+    }
+
+    private boolean isCustomProxySet(ProxyParams proxyConfig) {
+        return proxyConfig != null &&
+                proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
+                proxyConfig.getPort() != 0;
+    }
+
+    private void setCustomProxy(HttpClientBuilder cb, ProxyParams proxyConfig) {
+        String scheme = proxyConfig.getType();
+        HttpHost proxy = new HttpHost(proxyConfig.getServer(), proxyConfig.getPort(), scheme);
+        if (!isEmpty(proxyConfig.getUsername()) &&
+                !isEmpty(proxyConfig.getPassword())) {
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(new AuthScope(proxy), credentials);
+            cb.setDefaultCredentialsProvider(credsProvider);
+        }
+
+        logger.info("Setting proxy for Checkmarx http client");
+        cb.setProxy(proxy);
+        cb.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
+        cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
     }
 }

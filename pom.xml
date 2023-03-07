@@ -7,7 +7,6 @@
     <artifactId>checkmarx-sdk</artifactId>
     <packaging>pom</packaging>
     <version>2.16</version>
-
     <modules>
         <module>CX-SDK-API</module>
         <module>CX-SDK-Application</module>

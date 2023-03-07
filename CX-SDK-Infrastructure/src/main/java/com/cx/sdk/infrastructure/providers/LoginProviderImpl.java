@@ -16,8 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * Created by ehuds on 2/25/2017.
@@ -34,7 +36,7 @@ public class LoginProviderImpl implements LoginProvider {
 
 
     public static final String SERVER_CONNECTIVITY_FAILURE = "Failed to validate server connectivity for server: ";
-    public static final String CX_SDK_WEB_SERVICE_URL = "/cxwebinterface/sdk/cxsdkwebservice.asmx";
+        public static final String CX_SDK_WEB_SERVICE_URL = "/cxwebinterface/sdk/cxsdkwebservice.asmx";
 
     @Inject
     public LoginProviderImpl(SDKConfigurationProvider sdkConfigurationProvider) {
@@ -134,11 +136,18 @@ public class LoginProviderImpl implements LoginProvider {
         int responseCode;
         try {
             URL urlAddress = new URL(sdkConfigurationProvider.getCxServerUrl(), CX_SDK_WEB_SERVICE_URL);
-            HttpURLConnection httpConnection = connectionFactory.getConnection(urlAddress);
-            httpConnection.setRequestMethod("GET");
-            httpConnection.setRequestProperty("User-Agent", "Mozilla/5.0");
-            httpConnection.setReadTimeout(60000);
-            responseCode = httpConnection.getResponseCode();
+            logger.info("CxService available URL: " + urlAddress.toString());
+            URLConnection conn = connectionFactory.getConnection(urlAddress) ;
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setReadTimeout(60000);
+            if (urlAddress.getProtocol().equalsIgnoreCase("https")) {
+                logger.info("CxService available using proxy: " + ((HttpsURLConnection) conn).usingProxy());
+                responseCode = ((HttpsURLConnection) conn).getResponseCode();
+            } else {
+                logger.info("CxService available using proxy: " + ((HttpURLConnection) conn).usingProxy());
+                responseCode = ((HttpURLConnection) conn).getResponseCode();
+            }
+            logger.info("CxService available response code: " + responseCode);
         } catch (Exception e) {
             logger.error("Cx server interface is not available", e);
             return false;
