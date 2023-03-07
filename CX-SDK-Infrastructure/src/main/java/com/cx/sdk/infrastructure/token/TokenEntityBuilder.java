@@ -1,7 +1,7 @@
 package com.cx.sdk.infrastructure.token;
 
 import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 public class TokenEntityBuilder {
 

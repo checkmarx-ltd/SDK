@@ -11,7 +11,7 @@ public class AccessTokenDTO {
     private String accessToken;
 
     @JsonProperty("expires_in")
-    private int expiresIn;
+    private long expiresIn;
 
     @JsonProperty("token_type")
     private String tokenType;
@@ -35,11 +35,11 @@ public class AccessTokenDTO {
         this.accessToken = accessToken;
     }
 
-    public int getExpiresIn() {
+    public long getExpiresIn() {
         return expiresIn;
     }
 
-    public void setExpiresIn(int expiresIn) {
+    public void setExpiresIn(long expiresIn) {
         this.expiresIn = expiresIn;
     }
 

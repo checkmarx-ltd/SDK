@@ -43,9 +43,8 @@ import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.cx.sdk.oidcLogin.constants.Consts.*;
@@ -58,17 +57,19 @@ public class CxServerImpl implements ICxServer {
     private final String sessionEndURL;
     private final String logoutURL;
     private final String versionURL;
-
+    private final ProxyParams proxyParams;
     private HttpClient client;
     private List<Header> headers = new ArrayList<>();
     private String tokenEndpoint = Consts.SAST_PREFIX + "/identity/connect/token";
     private final String clientName;
-    private final String userInfoEndpoint = Consts.USER_INFO_ENDPOINT;
+    private String userInfoEndpoint = Consts.USER_INFO_ENDPOINT;
     public static final String GET_VERSION_ERROR = "Get Version API not found, server not found or version is older than 9.0";
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
     private static final String INFO_FAILED = "User info failed";
+
+    private static final Logger logger = LoggerFactory.getLogger(CxServerImpl.class);
     private final ProxyParams proxyParams;
-    private final Logger logger = LoggerFactory.getLogger("com.checkmarx.plugin.common.CxServerImpl");
+
 
 
     public CxServerImpl(String serverURL) {
@@ -97,12 +98,14 @@ public class CxServerImpl implements ICxServer {
 
     private void setClient() {
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultHeaders(headers);
-        setSSLTls(builder, "TLSv1.2");
+        setSSLTls("TLSv1.2");
+        logger.debug("Validate that TLSv is 1.2!!!");
         disableCertificateValidation(builder);
-        if (!isCustomProxySet(proxyParams))
+        //Add using proxy
+        if(!isCustomProxySet(proxyParams))
             builder.useSystemProperties();
         else
-            setCustomProxy(builder, proxyParams);
+            setCustomProxy(builder,proxyParams);
         client = builder.build();
     }
 
@@ -110,7 +113,11 @@ public class CxServerImpl implements ICxServer {
         return serverURL;
     }
 
-    public String getCxVersion() {
+    public String getCxVersion() throws IOException, CxValidateResponseException {
+        return getCxVersion("");
+    }
+
+    public String getCxVersion(String clientName) throws CxValidateResponseException, IOException {
         HttpResponse response;
         HttpUriRequest request;
         String version;
@@ -131,13 +138,14 @@ public class CxServerImpl implements ICxServer {
                     .setHeader("cxOrigin", clientName)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                     .build();
+            logger.debug(" Print Get Version request line\n" + request.getRequestLine());
+            
             response = client.execute(request);
             validateResponse(response, 200, GET_VERSION_ERROR);
             version = new BasicResponseHandler().handleResponse(response);
         } catch (IOException | CxValidateResponseException e) {
             version = "Pre 9.0";
         }
-
         return version;
     }
 
@@ -152,12 +160,15 @@ public class CxServerImpl implements ICxServer {
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                     .setEntity(TokenHTTPEntityBuilder.createGetAccessTokenFromCodeParamsEntity(code, serverURL))
                     .build();
+            logger.debug("Print Request\n" + postRequest.getRequestLine());
             loginResponse = client.execute(postRequest);
+            logger.debug("Print response \n" + loginResponse.getStatusLine());
             validateResponse(loginResponse, 200, AUTHENTICATION_FAILED);
             AccessTokenDTO jsonResponse = parseJsonFromResponse(loginResponse, AccessTokenDTO.class);
             Long accessTokenExpirationInMilli = getAccessTokenExpirationInMilli(jsonResponse.getExpiresIn());
             return new LoginData(jsonResponse.getAccessToken(), jsonResponse.getRefreshToken(), accessTokenExpirationInMilli, jsonResponse.getIdToken());
         } catch (IOException e) {
+            logger.trace("Failed to login", e);
             throw new CxRestLoginException("Failed to login: " + e.getMessage());
         } finally {
             HttpClientUtils.closeQuietly(loginResponse);
@@ -177,12 +188,15 @@ public class CxServerImpl implements ICxServer {
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                     .setEntity(TokenHTTPEntityBuilder.createGetAccessTokenFromRefreshTokenParamsEntity(refreshToken))
                     .build();
+            logger.debug("Print Request\n" + postRequest.getRequestLine());
             loginResponse = client.execute(postRequest);
+            logger.debug("Print response \n" + loginResponse.getStatusLine());
             validateResponse(loginResponse, 200, AUTHENTICATION_FAILED);
             AccessTokenDTO jsonResponse = parseJsonFromResponse(loginResponse, AccessTokenDTO.class);
             Long accessTokenExpirationInMilli = getAccessTokenExpirationInMilli(jsonResponse.getExpiresIn());
             return new LoginData(jsonResponse.getAccessToken(), jsonResponse.getRefreshToken(), accessTokenExpirationInMilli, jsonResponse.getIdToken());
         } catch (IOException e) {
+            logger.trace("Failed to get new access token from refresh token: ", e);
             throw new CxRestLoginException("Failed to get new access token from refresh token: " + e.getMessage());
         } finally {
             HttpClientUtils.closeQuietly(loginResponse);
@@ -213,7 +227,10 @@ public class CxServerImpl implements ICxServer {
                     .addHeader("Content-Length", "0")
                     .setUri(userInfoURL)
                     .build();
+            //Add print request
+            logger.debug("Print Request\n" + postRequest.getRequestLine());
             userInfoResponse = client.execute(postRequest);
+            logger.debug("Print response \n" + userInfoResponse.getStatusLine());
             validateResponse(userInfoResponse, 200, INFO_FAILED);
             UserInfoDTO jsonResponse = parseJsonFromResponse(userInfoResponse, UserInfoDTO.class);
             permissions = getPermissions(jsonResponse);
@@ -231,7 +248,7 @@ public class CxServerImpl implements ICxServer {
                 sastPermissions.contains(Consts.MANAGE_RESULTS_EXPLOITABILITY));
     }
 
-    private Long getAccessTokenExpirationInMilli(int accessTokenExpirationInSec) {
+    private Long getAccessTokenExpirationInMilli(long accessTokenExpirationInSec) {
         long currentTime = System.currentTimeMillis();
         long accessTokenExpInMilli = accessTokenExpirationInSec * 1000;
         return currentTime + accessTokenExpInMilli;
@@ -245,12 +262,14 @@ public class CxServerImpl implements ICxServer {
                 if (responseBody.contains("<!DOCTYPE html>")) {
                     throw new CxValidateResponseException(message + ": " + "status code: 500. Error message: Internal Server Error");
                 } else if (responseBody.contains("\"error\":\"invalid_grant\"")) {
+                    logger.error("[CHECKMARX] - Fail to validate response, response: " + responseBody);
                     throw new CxValidateResponseException(message);
                 } else {
                     throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message: " + responseBody);
                 }
             }
         } catch (IOException e) {
+            e.printStackTrace();
             throw new CxValidateResponseException("Error parse REST response body: " + e.getMessage());
         }
     }
@@ -272,19 +291,44 @@ public class CxServerImpl implements ICxServer {
         return result;
     }
 
+
+    private boolean isEmpty(String s){
+        return s == null || s.isEmpty();
+    }
+
+    private boolean isCustomProxySet(ProxyParams proxyConfig){
+        return proxyConfig != null &&
+                proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
+                proxyConfig.getPort() != 0;
+    }
+
+    private void setCustomProxy(HttpClientBuilder cb, ProxyParams proxyConfig) {
+        String scheme = proxyConfig.getType();
+        HttpHost proxy = new HttpHost(proxyConfig.getServer(), proxyConfig.getPort(), scheme);
+        if (!isEmpty(proxyConfig.getUsername()) &&
+                !isEmpty(proxyConfig.getPassword())) {
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(new AuthScope(proxy), credentials);
+            cb.setDefaultCredentialsProvider(credsProvider);
+        }
+
+        logger.info("Setting proxy for Checkmarx http client");
+        cb.setProxy(proxy);
+        cb.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
+        cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
+    }
+
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
         try {
-            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(new TrustStrategy() {
-                public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                    return true;
-                }
-            }).build();
+            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial((x509Certificates, s) -> true).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-            if (!isCustomProxySet(proxyParams))
+            //Add using proxy
+            if(!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder, proxyParams);
+                setCustomProxy(builder,proxyParams);
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
         }
@@ -292,7 +336,7 @@ public class CxServerImpl implements ICxServer {
         return builder;
     }
 
-    private void setSSLTls(HttpClientBuilder builder, String protocol) {
+    private void setSSLTls(String protocol) {
         try {
             final SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(null, null, null);
