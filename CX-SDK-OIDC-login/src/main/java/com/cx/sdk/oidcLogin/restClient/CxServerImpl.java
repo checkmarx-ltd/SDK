@@ -68,7 +68,6 @@ public class CxServerImpl implements ICxServer {
     private static final String INFO_FAILED = "User info failed";
 
     private static final Logger logger = LoggerFactory.getLogger(CxServerImpl.class);
-    private final ProxyParams proxyParams;
 
 
 
@@ -219,7 +218,7 @@ public class CxServerImpl implements ICxServer {
             logger.debug("Access token: " + accessToken);
             logger.info("User info request: " + userInfoURL);
 
-            setSSLTls(builder, "TLSv1.2");
+            setSSLTls("TLSv1.2");
             disableCertificateValidation(builder);
             client = builder.setDefaultHeaders(headers).build();
             postRequest = RequestBuilder.get()
@@ -344,32 +343,5 @@ public class CxServerImpl implements ICxServer {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.warn("Failed to set SSL TLS : " + e.getMessage());
         }
-    }
-
-    private boolean isEmpty(String s) {
-        return s == null || s.isEmpty();
-    }
-
-    private boolean isCustomProxySet(ProxyParams proxyConfig) {
-        return proxyConfig != null &&
-                proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
-                proxyConfig.getPort() != 0;
-    }
-
-    private void setCustomProxy(HttpClientBuilder cb, ProxyParams proxyConfig) {
-        String scheme = proxyConfig.getType();
-        HttpHost proxy = new HttpHost(proxyConfig.getServer(), proxyConfig.getPort(), scheme);
-        if (!isEmpty(proxyConfig.getUsername()) &&
-                !isEmpty(proxyConfig.getPassword())) {
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
-            CredentialsProvider credsProvider = new BasicCredentialsProvider();
-            credsProvider.setCredentials(new AuthScope(proxy), credentials);
-            cb.setDefaultCredentialsProvider(credsProvider);
-        }
-
-        logger.info("Setting proxy for Checkmarx http client");
-        cb.setProxy(proxy);
-        cb.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
-        cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
-    }
+    }    
 }

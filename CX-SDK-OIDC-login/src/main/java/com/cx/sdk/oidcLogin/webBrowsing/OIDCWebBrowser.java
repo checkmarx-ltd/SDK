@@ -22,14 +22,6 @@ import com.teamdev.jxbrowser.view.swing.BrowserView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import teamdev.license.JxBrowserLicense;
-import com.teamdev.jxbrowser.chromium.*;
-import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
-import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
-import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
-import com.teamdev.jxbrowser.chromium.events.LoadListener;
-import com.teamdev.jxbrowser.chromium.internal.Environment;
-import com.teamdev.jxbrowser.chromium.swing.BrowserView;
-import com.teamdev.jxbrowser.chromium.swing.DefaultNetworkDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -282,19 +274,13 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             lock.notify();
         }
     }
-
-    private LoadAdapter AddResponsesHandler() {
-        logger.info("Run AddResponsesHandler");
-        return new LoadAdapter() {
-            @Override
-            public void onFinishLoadingFrame(FinishLoadingEvent event) {
-                handleErrorResponse(event);
-                handleResponse(event);
-                logger.info("Print response.code: " + response.code);
-                if (response.code != null || hasErrors())
-                    closePopup();
-            }
-
+    
+    private Observer<FrameLoadFinished> AddResponsesHandler() {
+        return param -> {
+            handleErrorResponse(param);
+            handleResponse(param);
+            if ((response != null && response.code != null) || hasErrors())
+                closePopup();
         };
     }
 
