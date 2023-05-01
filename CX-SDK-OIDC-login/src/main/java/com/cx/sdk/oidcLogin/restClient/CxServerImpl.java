@@ -28,11 +28,11 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
@@ -99,10 +99,10 @@ public class CxServerImpl implements ICxServer {
         logger.debug("Validate that TLSv is 1.2!!!");
         disableCertificateValidation(builder);
         //Add using proxy
-        if(!isCustomProxySet(proxyParams))
+        if (!isCustomProxySet(proxyParams))
             builder.useSystemProperties();
         else
-            setCustomProxy(builder,proxyParams);
+            setCustomProxy(builder, proxyParams);
         client = builder.build();
     }
 
@@ -144,6 +144,7 @@ public class CxServerImpl implements ICxServer {
         try {
             headers.clear();
             setClient();
+            logger.info("[CHECKMARX] login URI: " + tokenEndpointURL + ", redirect uri: " + serverURL);
             postRequest = RequestBuilder.post()
                     .setUri(tokenEndpointURL)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
@@ -201,17 +202,17 @@ public class CxServerImpl implements ICxServer {
             HttpClientBuilder builder = HttpClientBuilder.create();
 
             //Add using proxy
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
             setSSLTls("TLSv1.2");
             disableCertificateValidation(builder);
             client = builder.setDefaultHeaders(headers).build();
 
             postRequest = RequestBuilder.post()
-                    .setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
-                    .setHeader("Content-Length","0")
+                    .setHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken)
+                    .setHeader("Content-Length", "0")
                     .setUri(userInfoURL)
                     .build();
             //Add print request
@@ -249,7 +250,11 @@ public class CxServerImpl implements ICxServer {
                 if (responseBody.contains("<!DOCTYPE html>")) {
                     throw new CxValidateResponseException(message + ": " + "status code: 500. Error message: Internal Server Error");
                 } else if (responseBody.contains("\"error\":\"invalid_grant\"")) {
-                    logger.error("[CHECKMARX] - Fail to validate response, response: " + responseBody);
+                    Header location = response.getLastHeader("Location");
+                    if (location != null) {
+                        logger.error("[CHECKMARX] - Fail to validate response, response from: " + location.getValue());
+                    }
+                    logger.error("[CHECKMARX] - Fail to validate response, response body: " + responseBody);
                     throw new CxValidateResponseException(message);
                 } else {
                     throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message:" + responseBody);
@@ -279,11 +284,11 @@ public class CxServerImpl implements ICxServer {
     }
 
 
-    private boolean isEmpty(String s){
+    private boolean isEmpty(String s) {
         return s == null || s.isEmpty();
     }
 
-    private boolean isCustomProxySet(ProxyParams proxyConfig){
+    private boolean isCustomProxySet(ProxyParams proxyConfig) {
         return proxyConfig != null &&
                 proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
                 proxyConfig.getPort() != 0;
@@ -312,10 +317,10 @@ public class CxServerImpl implements ICxServer {
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
             //Add using proxy
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
         }
