@@ -9,20 +9,19 @@ import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
 import com.cx.sdk.oidcLogin.restClient.entities.Permissions;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -39,7 +38,9 @@ import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -48,6 +49,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.cx.sdk.oidcLogin.constants.Consts.*;
 
@@ -69,8 +71,41 @@ public class CxServerImpl implements ICxServer {
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
     private static final String INFO_FAILED = "User info failed";
 
-    private static final Logger logger = LoggerFactory.getLogger(CxServerImpl.class);
+    private AccessTokenDTO accessTokenDTO;
+    private static final String ORIGIN_HEADER = "cxOrigin";
+    private static final String ORIGIN_URL_HEADER = "cxOriginUrl";
+    private static final String TEAM_PATH = "cxTeamPath";
 
+    public static String getCxOrigin() {
+        return cxOrigin;
+    }
+
+    public static void setCxOrigin(String cxOrigin) {
+        CxServerImpl.cxOrigin = cxOrigin;
+    }
+
+    public static String getCxOriginUrl() {
+        return cxOriginUrl;
+    }
+
+    public static void setCxOriginUrl(String cxOriginUrl) {
+        CxServerImpl.cxOriginUrl = cxOriginUrl;
+    }
+
+    public static String getCxTeam() {
+        return cxTeam;
+    }
+
+    public static void setCxTeam(String cxTeam) {
+        CxServerImpl.cxTeam = cxTeam;
+    }
+
+    private static  String cxOrigin = "cxOrigin";
+    private static  String cxOriginUrl = "cxOriginUrl";
+    private static  String cxTeam = "cxTeamPath";
+    private String rootUri;
+
+    private static final Logger logger = LoggerFactory.getLogger(CxServerImpl.class);
 
     public CxServerImpl(String serverURL) {
         this.serverURL = serverURL;
@@ -82,6 +117,22 @@ public class CxServerImpl implements ICxServer {
         this.clientName = "";
         this.proxyParams = null;
         setClient();
+    }
+
+    public AccessTokenDTO getAccessTokenDTO() {
+        return accessTokenDTO;
+    }
+
+    public void setAccessTokenDTO(AccessTokenDTO accessTokenDTO) {
+        this.accessTokenDTO = accessTokenDTO;
+    }
+
+    public String getRootUri() {
+        return rootUri;
+    }
+
+    public void setRootUri(String rootUri) {
+        this.rootUri = rootUri;
     }
 
     public CxServerImpl(String serverURL, String clientName, ProxyParams proxyParams) {
@@ -244,6 +295,57 @@ public class CxServerImpl implements ICxServer {
         return permissions;
     }
 
+    public <T> T putRequest(String relPath, String contentType, String entity, Class<T> responseType, int expectStatus, String failedMsg, StandardCharsets charsets) throws IOException {
+        HttpPut put = new HttpPut(rootUri + relPath);
+        StringEntity entity1 = new StringEntity(entity, charsets.toString());
+        return request(put, contentType, entity1, responseType, expectStatus, failedMsg, false, true);
+    }
+    private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
+        if (contentType != null) {
+            httpMethod.addHeader("Content-type", contentType);
+        }
+        if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
+            ((HttpEntityEnclosingRequestBase) httpMethod).setEntity(entity);
+        }
+        HttpResponse response = null;
+        int statusCode = 0;
+
+        try {
+            httpMethod.addHeader(ORIGIN_HEADER, getCxOrigin());
+            httpMethod.addHeader(ORIGIN_URL_HEADER, getCxOriginUrl());
+            httpMethod.addHeader(TEAM_PATH, getCxTeam());
+            if (accessTokenDTO.getAccessToken()!= null) {
+                httpMethod.addHeader(HttpHeaders.AUTHORIZATION, accessTokenDTO.getTokenType() + " " + accessTokenDTO.getAccessToken());
+            }
+
+            response = client.execute(httpMethod);
+            statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode == HttpStatus.SC_UNAUTHORIZED) { // Token has probably expired
+                throw new CxRestClientException("Failed to Authenticate Token");
+            }
+
+            validateResponse(response, expectStatus, "Failed to " + failedMsg);
+
+            //extract response as object and return the link
+            return convertToObject(response, responseType);
+        } catch (UnknownHostException e) {
+            logger.error(e.getMessage());
+            try {
+                throw new CxRestClientException("Connection to checkMarx server failed "+e.getMessage());
+            } catch (CxRestClientException ex) {
+                throw new RuntimeException(ex);
+            }
+
+        } catch (CxRestClientException e) {
+            throw new RuntimeException(e);
+        } catch (CxValidateResponseException e) {
+            throw new RuntimeException(e);
+        } finally {
+            httpMethod.releaseConnection();
+            HttpClientUtils.closeQuietly(response);
+        }
+    }
     private Permissions getPermissions(UserInfoDTO jsonResponse) {
         ArrayList<String> sastPermissions = jsonResponse.getSastPermissions();
         return new Permissions(sastPermissions.contains(Consts.SAVE_SAST_SCAN), sastPermissions.contains(Consts.MANAGE_RESULTS_COMMENT),
@@ -320,7 +422,40 @@ public class CxServerImpl implements ICxServer {
         cb.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
         cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
     }
+    private static <T> T convertToObject(HttpResponse response, Class<T> responseType) throws CxRestClientException {
+        ObjectMapper mapper = getObjectMapper();
+        try {
+            if (responseType != null && responseType.isInstance(response)){
+                return (T) response;
+        }
 
+
+        // If the caller is asking for the whole response, return the response (instead of just its entity),
+            // no matter if the entity is empty.
+            if (responseType != null && responseType.isAssignableFrom(response.getClass())) {
+                return (T) response;
+            }
+            if (response.getEntity() == null) {
+                return null;
+            }
+            String json = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
+            if (responseType.equals(String.class)) {
+                return (T) json;
+            }
+            return mapper.readValue(json,responseType );
+
+        } catch (IOException e) {
+            throw new CxRestClientException("Failed to parse json response: " + e.getMessage());
+        }
+    }
+
+    private static ObjectMapper getObjectMapper() {
+        ObjectMapper result = new ObjectMapper();
+
+        // Prevent UnrecognizedPropertyException if additional fields are added to API responses.
+        result.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return result;
+    }
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
         try {
             SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial((x509Certificates, s) -> true).build();
