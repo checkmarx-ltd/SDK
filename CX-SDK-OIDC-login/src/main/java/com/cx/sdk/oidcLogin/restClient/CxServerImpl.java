@@ -300,6 +300,12 @@ public class CxServerImpl implements ICxServer {
         long accessTokenExpInMilli = accessTokenExpirationInSec * 1000;
         return currentTime + accessTokenExpInMilli;
     }
+    public <T> T patchRequest(String relPath, String contentType, String entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
+        HttpPatch patch = new HttpPatch(restUri + relPath);
+        StringEntity entity1 = new StringEntity(entity,StandardCharsets.UTF_8);
+        return request(patch, contentType, entity1, responseType, expectStatus, failedMsg, false, true);
+    }
+
     public <T> T putRequest(String relPath, String contentType, String entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPut put = new HttpPut(restUri + relPath);
         StringEntity entity1 = new StringEntity(entity,StandardCharsets.UTF_8);
