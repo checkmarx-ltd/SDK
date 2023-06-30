@@ -285,7 +285,6 @@ public class CxServerImpl implements ICxServer {
             else
                 setCustomProxy(builder,proxyParams);
             
-            logger.debug("Access token: " + accessToken);
             logger.info("User info request: " + userInfoURL);
             setSSLTls("TLSv1.2");
             disableCertificateValidation(builder);
