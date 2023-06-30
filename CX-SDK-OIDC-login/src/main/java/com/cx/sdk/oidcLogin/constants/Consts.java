@@ -12,6 +12,7 @@ public class Consts {
     public static final String REDIRECT_URI_KEY = "redirect_uri";
     public static final String RESPONSE_TYPE_VALUE = "code";
     public static final String SCOPE_VALUE = "offline_access openid sast_api sast-permissions access_control_api";
+    public static final String SCOPE_VALUE2 = "sast_api openid sast-permissions access-control-permissions access_control_api management_and_orchestration_api";
     public static final String APPLICATION_NAME = "CxRestAPI";
     public static final String SAST_PREFIX = "/" + APPLICATION_NAME + "/auth";
     public static final String AUTHORIZATION_ENDPOINT = SAST_PREFIX + "/identity/connect/authorize";
