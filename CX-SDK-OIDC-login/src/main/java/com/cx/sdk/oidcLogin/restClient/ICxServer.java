@@ -7,6 +7,8 @@ import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
 import com.cx.sdk.oidcLogin.restClient.entities.Permissions;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
 
+import java.io.IOException;
+
 public interface ICxServer {
 
     String getServerURL();
@@ -17,5 +19,7 @@ public interface ICxServer {
 
     Permissions getPermissionsFromUserInfo(String accessToken) throws CxValidateResponseException;
 
-    String getCxVersion();
+    String getCxVersion() throws IOException, CxValidateResponseException;
+
+    Object getCxVersion(String clientName) throws CxValidateResponseException, IOException;
 }

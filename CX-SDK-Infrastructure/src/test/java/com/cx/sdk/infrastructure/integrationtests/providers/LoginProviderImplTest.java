@@ -14,7 +14,7 @@ import org.junit.Test;
  */
 public class LoginProviderImplTest extends ProviderTestBase {
 
-    private static final String VALID_SERVER = "http://10.31.2.217";
+    private static final String VALID_SERVER = "http://10.31.2.2.9";
     private static final String INVALID_SERVER_URL = "http://sgsdf.adf";
     private static final String VALID_SERVER_WITHOUT_CX_CLIENT = "http://www.google.com";
 

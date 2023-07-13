@@ -5,21 +5,37 @@
     <parent>
         <artifactId>checkmarx-sdk</artifactId>
         <groupId>com.cx.sdk</groupId>
-        <version>2.0.6</version>
+        <version>2.0.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>CX-SDK-OIDC-login</artifactId>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <repositories>
         <repository>
             <id>com.teamdev</id>
-            <url>http://maven.teamdev.com/repository/products</url>
+            <url>https://europe-maven.pkg.dev/jxbrowser/releases</url>
+        </repository>
+        <repository>
+        	<id>teamdev.license</id>
+        	<url>http://cx-artifactory.dm.cx:8082/artifactory/libs-release-local</url>
         </repository>
     </repositories>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <teamdev.version>6.23</teamdev.version>
+        <teamdev.version>7.20</teamdev.version>
         <teamdev.license.version>6.23</teamdev.license.version>
     </properties>
 
@@ -28,7 +44,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.0-jre</version>
+            <version>31.1-jre</version>
         </dependency>
         <dependency>
             <groupId>com.teamdev.jxbrowser</groupId>
@@ -38,9 +54,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>teamdev.license</groupId>
-            <artifactId>runtime</artifactId>
-            <version>${teamdev.license.version}</version>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-swing</artifactId>
+            <version>${teamdev.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -61,14 +77,24 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.4</version>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
         </dependency>
         <dependency>
             <groupId>com.cx.sdk</groupId>
             <artifactId>CX-SDK-Domain</artifactId>
-            <version>2.0.6</version>
+            <version>2.0.8</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+			<groupId>teamdev.license</groupId>
+			<artifactId>jxbrowser-license</artifactId>
+			<version>${teamdev.version}</version>
+		</dependency>
     </dependencies>
 
 
