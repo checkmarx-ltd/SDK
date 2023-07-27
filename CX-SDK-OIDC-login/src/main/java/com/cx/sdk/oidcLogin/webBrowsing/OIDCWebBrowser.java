@@ -100,7 +100,6 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-
         Engine engine = defaultEngine();
         engine.network().set(BeforeStartTransactionCallback.class, params -> {
             List<HttpHeader> headersList = new ArrayList<>(params.httpHeaders());
@@ -132,11 +131,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         browser = engine.newBrowser();
         browser.navigation().on(FrameLoadFinished.class, AddResponsesHandler());
         String postData = getPostData();
-
         logger.info("Authentication request data:" + postData);
         String pathToImage = "/checkmarxIcon.jpg";
         setIconImage(new ImageIcon(getClass().getResource(pathToImage), "checkmarx icon").getImage());
-
 
         SwingUtilities.invokeLater(() -> {
             browser.on(BrowserClosed.class, event ->
@@ -274,7 +271,6 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             lock.notify();
         }
     }
-
 
     private Observer<FrameLoadFinished> AddResponsesHandler() {
         return param -> {
