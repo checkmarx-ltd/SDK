@@ -179,12 +179,21 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
     public static Engine defaultEngine() {
         if (ENGINE == null || ENGINE.isClosed()) {
-            ENGINE = Engine.newInstance(EngineOptions
-                    .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
-                    .addSwitch("--disable-google-traffic")
-                    .licenseKey(JxBrowserLicense.getLicense())
-                    .build());
+            if(isMac()){
+                ENGINE = Engine.newInstance(EngineOptions
+                        .newBuilder(RenderingMode.OFF_SCREEN)
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
+                        .addSwitch("--disable-google-traffic")
+                        .licenseKey(JxBrowserLicense.getLicense())
+                        .build());
+            }else{
+                ENGINE = Engine.newInstance(EngineOptions
+                        .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
+                        .addSwitch("--disable-google-traffic")
+                        .licenseKey(JxBrowserLicense.getLicense())
+                        .build());
+            }
             ENGINE.network().set(CanGetCookiesCallback.class, params -> CanGetCookiesCallback.Response.can());
             ENGINE.network().set(CanSetCookieCallback.class, params ->
                     CanSetCookieCallback.Response.can());

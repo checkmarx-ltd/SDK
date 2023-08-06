@@ -93,7 +93,7 @@
         <dependency>
 			<groupId>teamdev.license</groupId>
 			<artifactId>jxbrowser-license</artifactId>
-			<version>${teamdev.version}</version>
+			<version>7.21</version>
 		</dependency>
     </dependencies>
 
