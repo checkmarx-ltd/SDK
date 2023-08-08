@@ -179,8 +179,9 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
     public static Engine defaultEngine() {
 
-        if (ENGINE == null || ENGINE.isClosed()) {
-            if(System.getProperty("RenderingMode")!=null && !System.getProperty("RenderingMode").isEmpty() && System.getProperty("RenderingMode").equalsIgnoreCase("OFF_SCREEN")) {
+        // Rendering mode for engine will be HARDWARE_ACCELERATED by default unless system property SET
+            if (ENGINE == null || ENGINE.isClosed()) {
+            if(System.getProperty("JxBrowserEngineRenderingMode")!=null && !System.getProperty("JxBrowserEngineRenderingMode").isEmpty() && System.getProperty("JxBrowserEngineRenderingMode").equalsIgnoreCase("OFF_SCREEN")) {
                 ENGINE = Engine.newInstance(EngineOptions
                             .newBuilder(RenderingMode.OFF_SCREEN)
                             .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
@@ -190,7 +191,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
 
             }else {
                 ENGINE = Engine.newInstance(EngineOptions
-                        .newBuilder(RenderingMode.OFF_SCREEN)
+                        .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
                         .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
                         .addSwitch("--disable-google-traffic")
                         .licenseKey(JxBrowserLicense.getLicense())
