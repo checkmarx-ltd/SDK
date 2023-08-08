@@ -180,23 +180,19 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     public static Engine defaultEngine() {
 
         // Rendering mode for engine will be HARDWARE_ACCELERATED by default unless system property SET
-            if (ENGINE == null || ENGINE.isClosed()) {
-            if(System.getProperty("JxBrowserEngineRenderingMode")!=null && !System.getProperty("JxBrowserEngineRenderingMode").isEmpty() && System.getProperty("JxBrowserEngineRenderingMode").equalsIgnoreCase("OFF_SCREEN")) {
-                ENGINE = Engine.newInstance(EngineOptions
-                            .newBuilder(RenderingMode.OFF_SCREEN)
-                            .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
-                            .addSwitch("--disable-google-traffic")
-                            .licenseKey(JxBrowserLicense.getLicense())
-                            .build());
 
-            }else {
-                ENGINE = Engine.newInstance(EngineOptions
-                        .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
+         if (ENGINE == null || ENGINE.isClosed()) {
+              RenderingMode engine = RenderingMode.HARDWARE_ACCELERATED;
+            if(System.getProperty("JxBrowserEngineRenderingMode")!=null && !System.getProperty("JxBrowserEngineRenderingMode").isEmpty() && System.getProperty("JxBrowserEngineRenderingMode").equalsIgnoreCase("OFF_SCREEN")) {
+                 engine = RenderingMode.OFF_SCREEN;
+            }
+            ENGINE = Engine.newInstance(EngineOptions
+                        .newBuilder(engine)
                         .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
                         .addSwitch("--disable-google-traffic")
                         .licenseKey(JxBrowserLicense.getLicense())
                         .build());
-            }
+
             ENGINE.network().set(CanGetCookiesCallback.class, params -> CanGetCookiesCallback.Response.can());
             ENGINE.network().set(CanSetCookieCallback.class, params ->
                     CanSetCookieCallback.Response.can());
