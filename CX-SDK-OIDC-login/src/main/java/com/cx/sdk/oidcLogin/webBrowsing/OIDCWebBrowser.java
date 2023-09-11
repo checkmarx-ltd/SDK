@@ -80,6 +80,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         logger.info("Finish waiting for Authentication.");
         //On MacOS as well as on windows, browser should be closed on the same application thread.
         //This changes was needed after Jxbrowser upgrade from 7.5  to 7.20
+        //This jxbrowser changes in intellije from 7.20 to 7.35
         close();
         logger.info("Browser closed successfully.");
         if (hasErrors()) {
@@ -182,7 +183,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         // Rendering mode for engine will be HARDWARE_ACCELERATED by default unless system property SET
 
          if (ENGINE == null || ENGINE.isClosed()) {
-              RenderingMode  engineRenderinMode = RenderingMode.HARDWARE_ACCELERATED;
+              RenderingMode  engineRenderinMode = RenderingMode.OFF_SCREEN;
             if(System.getProperty("JxBrowserEngineRenderingMode")!=null && !System.getProperty("JxBrowserEngineRenderingMode").isEmpty() && System.getProperty("JxBrowserEngineRenderingMode").equalsIgnoreCase("OFF_SCREEN")) {
                 engineRenderinMode = RenderingMode.OFF_SCREEN;
             }

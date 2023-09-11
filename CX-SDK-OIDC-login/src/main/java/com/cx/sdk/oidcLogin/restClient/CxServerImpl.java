@@ -150,6 +150,7 @@ public class CxServerImpl implements ICxServer {
     private void setClient() {
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultHeaders(headers);
         setSSLTls("TLSv1.2");
+        logger.debug("Validate that TLSv is 1.2!!!");
         disableCertificateValidation(builder);
         //Add using proxy
         if(!isCustomProxySet(proxyParams))
@@ -224,6 +225,7 @@ public class CxServerImpl implements ICxServer {
         try {
             headers.clear();
             setClient();
+            logger.info("[CHECKMARX] login URI: " + tokenEndpointURL + ", redirect uri: " + serverURL);
             postRequest = RequestBuilder.post()
                     .setUri(tokenEndpointURL)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
@@ -386,7 +388,11 @@ public class CxServerImpl implements ICxServer {
                 if (responseBody.contains("<!DOCTYPE html>")) {
                     throw new CxValidateResponseException(message + ": " + "status code: 500. Error message: Internal Server Error");
                 } else if (responseBody.contains("\"error\":\"invalid_grant\"")) {
-                    logger.error("[CHECKMARX] - Fail to validate response, response: " + responseBody);
+                    Header location = response.getLastHeader("Location");
+                    if (location != null) {
+                        logger.error("[CHECKMARX] - Fail to validate response, response from: " + location.getValue());
+                    }
+                    logger.error("[CHECKMARX] - Fail to validate response, response body : " + responseBody);
                     throw new CxValidateResponseException(message);
                 } else {
                     throw new CxValidateResponseException(message + ": " + "status code: " + response.getStatusLine() + ". Error message: " + responseBody);
