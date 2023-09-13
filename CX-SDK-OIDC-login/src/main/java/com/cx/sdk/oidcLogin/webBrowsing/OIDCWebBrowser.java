@@ -183,7 +183,7 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
         // Rendering mode for engine will be HARDWARE_ACCELERATED by default unless system property SET
 
          if (ENGINE == null || ENGINE.isClosed()) {
-              RenderingMode  engineRenderinMode = RenderingMode.OFF_SCREEN;
+              RenderingMode  engineRenderinMode = RenderingMode.HARDWARE_ACCELERATED;
             if(System.getProperty("JxBrowserEngineRenderingMode")!=null && !System.getProperty("JxBrowserEngineRenderingMode").isEmpty() && System.getProperty("JxBrowserEngineRenderingMode").equalsIgnoreCase("OFF_SCREEN")) {
                 engineRenderinMode = RenderingMode.OFF_SCREEN;
             }
