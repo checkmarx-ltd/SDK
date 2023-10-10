@@ -22,6 +22,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -313,7 +314,7 @@ public class CxServerImpl implements ICxServer {
 
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
         try {
-            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial((x509Certificates, s) -> true).build();
+            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
             //Add using proxy

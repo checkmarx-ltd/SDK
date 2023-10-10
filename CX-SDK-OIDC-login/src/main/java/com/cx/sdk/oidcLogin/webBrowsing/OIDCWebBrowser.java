@@ -359,7 +359,13 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private boolean validateUrlResponse(FrameLoadFinished event) {
-        return event.url().toLowerCase().contains(Consts.CODE_KEY);
+        try {
+            URL url = new URL(serverUrl);
+            String host = url.getHost();
+            return event.url().contains(host) && event.url().toLowerCase().contains(Consts.CODE_KEY);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private boolean hasErrors() {
@@ -367,18 +373,32 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
     }
 
     private void handleResponse(FrameLoadFinished event) {
-        if (event.frame().isMain() && (validateUrlResponse(event)) && !hasErrors()) {
+        if (event.frame().isMain() && validateUrlResponse(event) && !hasErrors()) {
             String validatedURL = event.url();
-            logger.info("[CHECKMARX] - Frame load finish URL: " + validatedURL);
             extractReturnedUrlParams(validatedURL);
-            response = new AuthenticationData(urlParamsMap.get(Consts.CODE_KEY));
+            if (urlParamsMap != null && !isEmpty(urlParamsMap.get(Consts.CODE_KEY))) {
+                response = new AuthenticationData(urlParamsMap.get(Consts.CODE_KEY));
+            }
         }
     }
 
     private Map<String, String> extractReturnedUrlParams(String validatedURL) {
-        String query = validatedURL.split("\\?")[1];
-        urlParamsMap = Splitter.on('&').trimResults().withKeyValueSeparator("=").split(query);
+        try {
+            URL url = new URL(validatedURL);
+            String query = url.getQuery();
+            query = isEmpty(query) ? url.getFile() : query;
+            query = isEmpty(query) ? url.getRef() : query;
+            query = query.startsWith("&") ? query.substring(1) : query;
+
+            urlParamsMap = Splitter.on('&').trimResults().withKeyValueSeparator("=").split(query);
+        } catch (Exception e) {
+            logger.error("Fail to extract params from: " + validatedURL);
+        }
         return urlParamsMap;
+    }
+
+    public static boolean isEmpty(final CharSequence cs) {
+        return cs == null || cs.length() == 0;
     }
 
     private void closePopup() {
