@@ -106,6 +106,8 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             headersList.add(HttpHeader.of("cxOrigin", clientName));
             return BeforeStartTransactionCallback.Response.override(headersList);
         });
+        engine.network().set(VerifyCertificateCallback.class, (params) ->
+                VerifyCertificateCallback.Response.valid());
         if (proxyParams != null) {
             if (proxyParams.isHostPortExist()) {
                 String proxyRules = proxyParams.getServer() + ":" + proxyParams.getPort();
@@ -186,6 +188,8 @@ public class OIDCWebBrowser extends JFrame implements IOIDCWebBrowser {
             ENGINE.network().set(CanSetCookieCallback.class, params ->
                     CanSetCookieCallback.Response.can());
             ENGINE.network().set(VerifyCertificateCallback.class, params -> VerifyCertificateCallback.Response.valid());
+            ENGINE.network().set(VerifyCertificateCallback.class, (params) ->
+                    VerifyCertificateCallback.Response.valid());
         }
 
         return ENGINE;
