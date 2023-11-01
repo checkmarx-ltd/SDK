@@ -6,7 +6,7 @@
     <groupId>com.cx.sdk</groupId>
     <artifactId>checkmarx-sdk</artifactId>
     <packaging>pom</packaging>
-    <version>2.16</version>
+    <version>2.19-SEG</version>
 
     <modules>
         <module>CX-SDK-API</module>

@@ -4,48 +4,43 @@ import com.cx.sdk.domain.entities.ProxyParams;
 import com.cx.sdk.oidcLogin.constants.Consts;
 import com.cx.sdk.oidcLogin.dto.AccessTokenDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
-import org.apache.http.*;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.StringEntity;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import com.cx.sdk.oidcLogin.restClient.entities.Permissions;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -68,8 +63,8 @@ public class CxServerImpl implements ICxServer {
     private List<Header> headers = new ArrayList<>();
     private String tokenEndpoint = Consts.SAST_PREFIX + "/identity/connect/token";
     private final String clientName;
-    private String restEndpoint =  "/CxRestAPI/";
-    private String restUri ;
+    private String restEndpoint = "/CxRestAPI/";
+    private String restUri;
     private String userInfoEndpoint = Consts.USER_INFO_ENDPOINT;
     public static final String GET_VERSION_ERROR = "Get Version API not found, server not found or version is older than 9.0";
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
@@ -104,9 +99,9 @@ public class CxServerImpl implements ICxServer {
         CxServerImpl.cxTeam = cxTeam;
     }
 
-    private static  String cxOrigin = "cxOrigin";
-    private static  String cxOriginUrl = "cxOriginUrl";
-    private static  String cxTeam = "cxTeamPath";
+    private static String cxOrigin = "cxOrigin";
+    private static String cxOriginUrl = "cxOriginUrl";
+    private static String cxTeam = "cxTeamPath";
     private String rootUri;
     private static final Logger logger = LoggerFactory.getLogger(CxServerImpl.class);
 
@@ -132,7 +127,7 @@ public class CxServerImpl implements ICxServer {
         this.versionURL = serverURL + VERSION_END_POINT;
         this.clientName = clientName;
         this.proxyParams = proxyParams;
-        this.restUri=serverURL+restEndpoint;
+        this.restUri = serverURL + restEndpoint;
         setClient();
     }
 
@@ -159,10 +154,10 @@ public class CxServerImpl implements ICxServer {
         logger.debug("Validate that TLSv is 1.2!!!");
         disableCertificateValidation(builder);
         //Add using proxy
-        if(!isCustomProxySet(proxyParams))
+        if (!isCustomProxySet(proxyParams))
             builder.useSystemProperties();
         else
-            setCustomProxy(builder,proxyParams);
+            setCustomProxy(builder, proxyParams);
         client = builder.build();
     }
 
@@ -261,17 +256,17 @@ public class CxServerImpl implements ICxServer {
             HttpClientBuilder builder = HttpClientBuilder.create();
 
             //Add using proxy
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
             setSSLTls("TLSv1.2");
             disableCertificateValidation(builder);
             client = builder.setDefaultHeaders(headers).build();
 
             postRequest = RequestBuilder.post()
-                    .setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
-                    .setHeader("Content-Length","0")
+                    .setHeader(Consts.AUTHORIZATION_HEADER, Consts.BEARER + accessToken)
+                    .setHeader("Content-Length", "0")
                     .setUri(userInfoURL)
                     .build();
             //Add print request
@@ -300,17 +295,19 @@ public class CxServerImpl implements ICxServer {
         long accessTokenExpInMilli = accessTokenExpirationInSec * 1000;
         return currentTime + accessTokenExpInMilli;
     }
+
     public <T> T patchRequest(String relPath, String contentType, String entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPatch patch = new HttpPatch(restUri + relPath);
-        StringEntity entity1 = new StringEntity(entity,StandardCharsets.UTF_8);
+        StringEntity entity1 = new StringEntity(entity, StandardCharsets.UTF_8);
         return request(patch, contentType, entity1, responseType, expectStatus, failedMsg, false, true);
     }
 
     public <T> T putRequest(String relPath, String contentType, String entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPut put = new HttpPut(restUri + relPath);
-        StringEntity entity1 = new StringEntity(entity,StandardCharsets.UTF_8);
+        StringEntity entity1 = new StringEntity(entity, StandardCharsets.UTF_8);
         return request(put, contentType, entity1, responseType, expectStatus, failedMsg, false, true);
     }
+
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
         if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
@@ -325,7 +322,7 @@ public class CxServerImpl implements ICxServer {
             httpMethod.addHeader(ORIGIN_HEADER, getCxOrigin());
             httpMethod.addHeader(ORIGIN_URL_HEADER, getCxOriginUrl());
             httpMethod.addHeader(TEAM_PATH, getCxTeam());
-            if (accessTokenDTO.getAccessToken()!= null) {
+            if (accessTokenDTO.getAccessToken() != null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, accessTokenDTO.getTokenType() + " " + accessTokenDTO.getAccessToken());
             }
 
@@ -343,7 +340,7 @@ public class CxServerImpl implements ICxServer {
         } catch (UnknownHostException e) {
             logger.error(e.getMessage());
             try {
-                throw new CxRestClientException("Connection to checkMarx server failed "+e.getMessage());
+                throw new CxRestClientException("Connection to checkMarx server failed " + e.getMessage());
             } catch (CxRestClientException ex) {
                 throw new RuntimeException(ex);
             }
@@ -357,6 +354,7 @@ public class CxServerImpl implements ICxServer {
             HttpClientUtils.closeQuietly(response);
         }
     }
+
     private static void validateResponse(HttpResponse response, int status, String message) throws CxValidateResponseException {
         try {
             if (response.getStatusLine().getStatusCode() != status) {
@@ -395,11 +393,11 @@ public class CxServerImpl implements ICxServer {
     }
 
 
-    private boolean isEmpty(String s){
+    private boolean isEmpty(String s) {
         return s == null || s.isEmpty();
     }
 
-    private boolean isCustomProxySet(ProxyParams proxyConfig){
+    private boolean isCustomProxySet(ProxyParams proxyConfig) {
         return proxyConfig != null &&
                 proxyConfig.getServer() != null && !proxyConfig.getServer().isEmpty() &&
                 proxyConfig.getPort() != 0;
@@ -425,7 +423,7 @@ public class CxServerImpl implements ICxServer {
     private static <T> T convertToObject(HttpResponse response, Class<T> responseType) throws CxRestClientException {
         ObjectMapper mapper = getObjectMapper();
         try {
-            if (responseType != null && responseType.isInstance(response)){
+            if (responseType != null && responseType.isInstance(response)) {
                 return (T) response;
             }
 
@@ -442,7 +440,7 @@ public class CxServerImpl implements ICxServer {
             if (responseType.equals(String.class)) {
                 return (T) json;
             }
-            return mapper.readValue(json,responseType );
+            return mapper.readValue(json, responseType);
 
         } catch (IOException e) {
             throw new CxRestClientException("Failed to parse json response: " + e.getMessage());
@@ -456,16 +454,17 @@ public class CxServerImpl implements ICxServer {
         result.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return result;
     }
+
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
         try {
-            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial((x509Certificates, s) -> true).build();
+            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
             //Add using proxy
-            if(!isCustomProxySet(proxyParams))
+            if (!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
             else
-                setCustomProxy(builder,proxyParams);
+                setCustomProxy(builder, proxyParams);
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
         }
