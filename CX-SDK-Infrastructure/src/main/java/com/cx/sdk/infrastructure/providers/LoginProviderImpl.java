@@ -63,13 +63,15 @@ public class LoginProviderImpl implements LoginProvider {
             return null;
 
         Permissions permissions = getPermissions(loginData.getAccessToken());
-        return new Session("",
+        Session session = new Session("",
                 loginData.getAccessToken(),
                 loginData.getRefreshToken(),
                 loginData.getAccessTokenExpirationInMillis(),
                 permissions.isSaveSastScan(),
                 permissions.isManageResultsExploitability(),
                 permissions.isManageResultsComment());
+        session.setCxVersion(loginData.getCxVersion());
+        return session;
     }
 
     @Override

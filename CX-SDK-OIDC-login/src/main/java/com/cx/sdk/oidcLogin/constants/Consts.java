@@ -24,7 +24,8 @@ public class Consts {
     public static final String USER_INFO_ENDPOINT = SAST_PREFIX + "/identity/connect/userinfo";
     public static final String SAVE_SAST_SCAN = "save-sast-scan";
     public static final String MANAGE_RESULTS_COMMENT = "manage-result-comment";
-    public static final String MANAGE_RESULTS_EXPLOITABILITY = "manage-result-exploitability";
+    public static final String MANAGE_RESULTS_EXPLOITABILITY = "set-result-state-notexploitable";
+    
     public static final String RESPONSE_TYPE_KEY = "response_type";
 
     public static final String LOGOUT_REDIRECT = "post_logout_redirect_uri";

@@ -12,6 +12,8 @@ public class Session {
 
     private boolean isAllowedToChangeNotExploitable;
     private boolean isIsAllowedToModifyResultDetails;
+    
+    private String cxVersion;
 
     public Session (){
     }
@@ -44,5 +46,13 @@ public class Session {
 
     public Long getAccessTokenExpiration() {
         return accessTokenExpiration;
+    }
+    
+    public String getCxVersion() {
+    	return cxVersion;
+    }
+    
+    public void setCxVersion(String cxVersion) {
+    	this.cxVersion = cxVersion;
     }
 }

@@ -13,6 +13,7 @@ public class SessionDTO {
     private boolean isScanner;
     private boolean isAllowedToChangeNotExploitable;
     private boolean isIsAllowedToModifyResultDetails;
+    private String cxVersion;
 
     public String getSessionId() {
         return sessionId;
@@ -68,5 +69,13 @@ public class SessionDTO {
 
     public void setAccessTokenExpiration(Long accessTokenExpiration) {
         this.accessTokenExpiration = accessTokenExpiration;
+    }
+    
+    public String getCxVersion() {
+    	return cxVersion;
+    }
+    
+    public void setCxVersion(String cxVersion) {
+    	this.cxVersion = cxVersion;
     }
 }

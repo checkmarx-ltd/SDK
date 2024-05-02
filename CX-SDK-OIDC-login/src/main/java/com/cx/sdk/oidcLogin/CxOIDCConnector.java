@@ -7,6 +7,9 @@ import com.cx.sdk.oidcLogin.restClient.ICxServer;
 import com.cx.sdk.oidcLogin.webBrowsing.AuthenticationData;
 import com.cx.sdk.oidcLogin.webBrowsing.IOIDCWebBrowser;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +46,12 @@ public class CxOIDCConnector {
             logger.debug("Login was canceled");
             return new LoginData(true);
         }
-
-        return cxServer.login(authenticationData.code);
+        LoginData loginData = cxServer.login(authenticationData.code);
+        //fetch SAST version from response json of get version api and set in loginData
+        JsonNode node = new ObjectMapper().readTree(version);
+		String cxVersion = node.path("version").asText();
+		String[] sastVersionSplit = cxVersion.split("\\.");
+        loginData.setCxVersion(sastVersionSplit[0]+"."+sastVersionSplit[1]);
+        return loginData;
     }
 }
