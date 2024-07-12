@@ -112,9 +112,9 @@ public class LoginProviderImpl implements LoginProvider {
             return cxOIDCLoginClient.getExtendedConfigurations(accessToken,portalOrNone);
         } catch (CxValidateResponseException e) {
             String errorMessage = String.format("Failed to perform login to server: %s",
-                    sdkConfigurationProvider.getCxServerUrl().toString() + ". Failed to get extended configurations for "+portalOrNone+".");
+                    sdkConfigurationProvider.getCxServerUrl().toString() + ". Failed to get extended configurations for "+portalOrNone+". "+e.getMessage());
             logger.error(errorMessage, e);
-            throw new SdkException(errorMessage, e);
+            throw new SdkException("You do not have the necessary permissions to perform this action.", e);
         }
 
     }
