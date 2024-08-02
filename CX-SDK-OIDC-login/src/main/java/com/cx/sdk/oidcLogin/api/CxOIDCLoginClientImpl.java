@@ -7,6 +7,7 @@ import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
 import com.cx.sdk.oidcLogin.restClient.CxServerImpl;
 import com.cx.sdk.oidcLogin.restClient.ICxServer;
+import com.cx.sdk.oidcLogin.restClient.entities.Configurations;
 import com.cx.sdk.oidcLogin.restClient.entities.Permissions;
 import com.cx.sdk.oidcLogin.webBrowsing.IOIDCWebBrowser;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
@@ -76,6 +77,10 @@ public class CxOIDCLoginClientImpl implements CxOIDCLoginClient {
 
     public Permissions getPermissions(String accessToken) throws CxValidateResponseException {
         return server.getPermissionsFromUserInfo(accessToken);
+    }
+    
+    public Configurations getExtendedConfigurations(String accessToken, String portalOrNone) throws CxValidateResponseException {
+    	return server.getExtendedConfigurations(accessToken,portalOrNone);
     }
 
     @Override

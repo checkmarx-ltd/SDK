@@ -15,10 +15,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import com.cx.sdk.oidcLogin.dto.ConfigurationDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
+import com.cx.sdk.oidcLogin.restClient.entities.Configurations;
 import com.cx.sdk.oidcLogin.restClient.entities.Permissions;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +36,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -68,6 +71,7 @@ public class CxServerImpl implements ICxServer {
     private String serverURL;
     private String tokenEndpointURL;
     private String userInfoURL;
+    private String extendedConfigurationsURL;
     private final String sessionEndURL;
     private final String logoutURL;
     private final String versionURL;
@@ -81,6 +85,8 @@ public class CxServerImpl implements ICxServer {
 
     private String restUri ;
     private final String userInfoEndpoint = Consts.USER_INFO_ENDPOINT;
+    private final String extendedConfigurationsEndpoint = Consts.EXTENDED_CONFIGURATIONS_ENDPOINT;
+    
     public static final String GET_VERSION_ERROR = "Get Version API not found, server not found or version is older than 9.0";
     private static final String AUTHENTICATION_FAILED = " User authentication failed";
     private static final String INFO_FAILED = "User info failed";
@@ -126,6 +132,7 @@ public class CxServerImpl implements ICxServer {
         this.serverURL = serverURL;
         this.tokenEndpointURL = serverURL + tokenEndpoint;
         this.userInfoURL = serverURL + userInfoEndpoint;
+        this.extendedConfigurationsURL = serverURL + extendedConfigurationsEndpoint;
         this.sessionEndURL = serverURL + END_SESSION_ENDPOINT;
         this.logoutURL = serverURL + LOGOUT_ENDPOINT;
         this.versionURL = serverURL + VERSION_END_POINT;
@@ -138,6 +145,7 @@ public class CxServerImpl implements ICxServer {
         this.serverURL = serverURL;
         this.tokenEndpointURL = serverURL + tokenEndpoint;
         this.userInfoURL = serverURL + userInfoEndpoint;
+        this.extendedConfigurationsURL = serverURL + extendedConfigurationsEndpoint;
         this.sessionEndURL = serverURL + END_SESSION_ENDPOINT;
         this.logoutURL = serverURL + LOGOUT_ENDPOINT;
         this.versionURL = serverURL + VERSION_END_POINT;
@@ -308,6 +316,44 @@ public class CxServerImpl implements ICxServer {
         }
         return permissions;
     }
+    
+    @Override
+    public Configurations getExtendedConfigurations(String accessToken, String portalOrNone) throws CxValidateResponseException {
+        HttpUriRequest getRequest;
+        HttpResponse extendedConfigurationsResponse = null;
+        Configurations configurations = null;
+        try {
+            HttpClientBuilder builder = HttpClientBuilder.create();
+            //Add using proxy
+            if(!isCustomProxySet(proxyParams))
+                builder.useSystemProperties();
+            else
+                setCustomProxy(builder,proxyParams);
+            
+            logger.info("Extended Configuration request: " + extendedConfigurationsURL+"/"+portalOrNone);
+            setSSLTls("TLSv1.2");
+            disableCertificateValidation(builder);
+            client = builder.setDefaultHeaders(headers).build();
+            getRequest = RequestBuilder
+            		.get()
+            		.setUri(extendedConfigurationsURL+"/"+portalOrNone)
+            		.setHeader("cxOrigin", clientName)
+            		.setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
+                    .build();
+            //Add print request
+            logger.debug("Print Request\n" + getRequest.getRequestLine());
+            extendedConfigurationsResponse = client.execute(getRequest);
+            logger.debug("Print response \n" + extendedConfigurationsResponse.getStatusLine());
+            validateResponse(extendedConfigurationsResponse, 200, INFO_FAILED);
+            ConfigurationDTO[] jsonResponse = parseJsonFromResponse(extendedConfigurationsResponse, ConfigurationDTO[].class);
+            configurations = getConfigurations(jsonResponse);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            HttpClientUtils.closeQuietly(extendedConfigurationsResponse);
+        }
+        return configurations;
+    }
 
     public <T> T putRequest(String relPath, String contentType, String entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPut put = new HttpPut(restUri + relPath);
@@ -370,6 +416,28 @@ public class CxServerImpl implements ICxServer {
         ArrayList<String> sastPermissions = jsonResponse.getSastPermissions();
         return new Permissions(sastPermissions.contains(Consts.SAVE_SAST_SCAN), sastPermissions.contains(Consts.MANAGE_RESULTS_COMMENT),
                 sastPermissions.contains(Consts.MANAGE_RESULTS_EXPLOITABILITY));
+    }
+    
+    private Configurations getConfigurations(ConfigurationDTO[] jsonResponse) {
+    	Configurations configurations = new Configurations();
+    	
+    	for(ConfigurationDTO config : jsonResponse) {
+    		if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE.equalsIgnoreCase(config.getKey())) {
+    			if("true".equalsIgnoreCase(config.getValue())) {
+    			configurations.setMandatoryCommentOnChangeResultState(true);
+    			break;
+    			}
+    		} else if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_NE.equalsIgnoreCase(config.getKey())) {
+    			if("true".equalsIgnoreCase(config.getValue())) {
+    			configurations.setMandatoryCommentOnChangeResultStateToNE(true);
+    			}
+    		} else if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_PNE.equalsIgnoreCase(config.getKey())) {
+    			if("true".equalsIgnoreCase(config.getValue())) {
+    			configurations.setMandatoryCommentOnChangeResultStateToPNE(true);
+    			}
+    		}
+    	}    	
+        return configurations;
     }
 
     private Long getAccessTokenExpirationInMilli(long accessTokenExpirationInSec) {
@@ -479,7 +547,7 @@ public class CxServerImpl implements ICxServer {
     }
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
         try {
-            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial((x509Certificates, s) -> true).build();
+            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
             //Add using proxy

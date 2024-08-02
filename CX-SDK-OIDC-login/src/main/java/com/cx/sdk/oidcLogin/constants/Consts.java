@@ -24,10 +24,18 @@ public class Consts {
     public static final String USER_INFO_ENDPOINT = SAST_PREFIX + "/identity/connect/userinfo";
     public static final String SAVE_SAST_SCAN = "save-sast-scan";
     public static final String MANAGE_RESULTS_COMMENT = "manage-result-comment";
-    public static final String MANAGE_RESULTS_EXPLOITABILITY = "manage-result-exploitability";
+    public static final String MANAGE_RESULTS_EXPLOITABILITY = "set-result-state-notexploitable";
+    
     public static final String RESPONSE_TYPE_KEY = "response_type";
 
     public static final String LOGOUT_REDIRECT = "post_logout_redirect_uri";
     public static final String TOKEN_HINT = "id_token_hint";
     public static final String LOGOUT_ID = "logoutId";
+    public static final String EXTENDED_CONFIGURATIONS_ENDPOINT = "/" + APPLICATION_NAME + "/configurationsExtended";
+    public static final String PORTAL= "portal";
+    public static final String NONE ="None";
+    
+    public static final String MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE ="MandatoryCommentOnChangeResultState";
+    public static final String MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_NE ="MandatoryCommentOnChangeResultStateToNE";
+    public static final String MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_PNE ="MandatoryCommentOnChangeResultStateToPNE";
 }

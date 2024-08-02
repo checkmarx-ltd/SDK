@@ -10,6 +10,7 @@ import com.cx.sdk.oidcLogin.api.CxOIDCLoginClientImpl;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
+import com.cx.sdk.oidcLogin.restClient.entities.Configurations;
 import com.cx.sdk.oidcLogin.restClient.entities.Permissions;
 import com.cx.sdk.oidcLogin.webBrowsing.LoginData;
 import org.slf4j.Logger;
@@ -63,13 +64,22 @@ public class LoginProviderImpl implements LoginProvider {
             return null;
 
         Permissions permissions = getPermissions(loginData.getAccessToken());
-        return new Session("",
+        Configurations configurations = getExtendedConfigurations(loginData.getAccessToken(),"portal");
+        if(!configurations.isMandatoryCommentOnChangeResultState()) {
+        	configurations = getExtendedConfigurations(loginData.getAccessToken(),"None");
+        }
+        Session session = new Session("",
                 loginData.getAccessToken(),
                 loginData.getRefreshToken(),
                 loginData.getAccessTokenExpirationInMillis(),
                 permissions.isSaveSastScan(),
                 permissions.isManageResultsExploitability(),
                 permissions.isManageResultsComment());
+        session.setCxVersion(loginData.getCxVersion());
+        session.setMandatoryCommentOnChangeResultState(configurations.isMandatoryCommentOnChangeResultState());
+        session.setMandatoryCommentOnChangeResultStateToNE(configurations.isMandatoryCommentOnChangeResultStateToNE());
+        session.setMandatoryCommentOnChangeResultStateToPNE(configurations.isMandatoryCommentOnChangeResultStateToPNE());
+        return session;
     }
 
     @Override
@@ -93,6 +103,18 @@ public class LoginProviderImpl implements LoginProvider {
                     sdkConfigurationProvider.getCxServerUrl().toString() + ". Failed to get permissions.");
             logger.error(errorMessage, e);
             throw new SdkException(errorMessage, e);
+        }
+
+    }
+    
+    private Configurations getExtendedConfigurations(String accessToken,String portalOrNone) {
+        try {
+            return cxOIDCLoginClient.getExtendedConfigurations(accessToken,portalOrNone);
+        } catch (CxValidateResponseException e) {
+            String errorMessage = String.format("Failed to perform login to server: %s",
+                    sdkConfigurationProvider.getCxServerUrl().toString() + ". Failed to get extended configurations for "+portalOrNone+". "+e.getMessage());
+            logger.error(errorMessage, e);
+            throw new SdkException("You do not have the necessary permissions to perform this action.", e);
         }
 
     }

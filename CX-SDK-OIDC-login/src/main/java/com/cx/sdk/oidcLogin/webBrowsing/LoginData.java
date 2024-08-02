@@ -6,6 +6,7 @@ public class LoginData {
     private String accessToken;
     private String refreshToken;
     private String idToken;
+    private String cxVersion;
 
     private Long accessTokenExpirationInMillis;
 
@@ -38,6 +39,14 @@ public class LoginData {
 
     public Long getAccessTokenExpirationInMillis() {
         return accessTokenExpirationInMillis;
+    }
+    
+    public String getCxVersion() {
+    	return cxVersion;
+    }
+    
+    public void setCxVersion(String cxVersion) {
+    	this.cxVersion = cxVersion;
     }
 
 }
