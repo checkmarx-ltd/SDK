@@ -345,8 +345,16 @@ public class CxServerImpl implements ICxServer {
             extendedConfigurationsResponse = client.execute(getRequest);
             logger.debug("Print response \n" + extendedConfigurationsResponse.getStatusLine());
             validateResponse(extendedConfigurationsResponse, 200, INFO_FAILED);
-            ConfigurationDTO[] jsonResponse = parseJsonFromResponse(extendedConfigurationsResponse, ConfigurationDTO[].class);
-            configurations = getConfigurations(jsonResponse);
+            ConfigurationDTO jsonResponse = parseJsonFromResponse(extendedConfigurationsResponse, ConfigurationDTO.class);
+
+
+         // Set properties from jsonResponse to configurations
+         configurations.setMandatoryCommentOnChangeResultState(jsonResponse.isMandatoryCommentOnChangeResultState());
+         configurations.setMandatoryCommentOnChangeResultStateToNE(jsonResponse.isMandatoryCommentOnChangeResultStateToNE());
+         configurations.setMandatoryCommentOnChangeResultStateToPNE(jsonResponse.isMandatoryCommentOnChangeResultStateToPNE());
+
+         // Return the configured object
+         return configurations;
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -418,27 +426,7 @@ public class CxServerImpl implements ICxServer {
                 sastPermissions.contains(Consts.MANAGE_RESULTS_EXPLOITABILITY));
     }
     
-    private Configurations getConfigurations(ConfigurationDTO[] jsonResponse) {
-    	Configurations configurations = new Configurations();
-    	
-    	for(ConfigurationDTO config : jsonResponse) {
-    		if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE.equalsIgnoreCase(config.getKey())) {
-    			if("true".equalsIgnoreCase(config.getValue())) {
-    			configurations.setMandatoryCommentOnChangeResultState(true);
-    			break;
-    			}
-    		} else if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_NE.equalsIgnoreCase(config.getKey())) {
-    			if("true".equalsIgnoreCase(config.getValue())) {
-    			configurations.setMandatoryCommentOnChangeResultStateToNE(true);
-    			}
-    		} else if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_PNE.equalsIgnoreCase(config.getKey())) {
-    			if("true".equalsIgnoreCase(config.getValue())) {
-    			configurations.setMandatoryCommentOnChangeResultStateToPNE(true);
-    			}
-    		}
-    	}    	
-        return configurations;
-    }
+    
 
     private Long getAccessTokenExpirationInMilli(long accessTokenExpirationInSec) {
         long currentTime = System.currentTimeMillis();

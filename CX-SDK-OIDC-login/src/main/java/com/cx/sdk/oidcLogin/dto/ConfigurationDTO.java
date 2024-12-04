@@ -6,36 +6,40 @@ import java.util.ArrayList;
 
 public class ConfigurationDTO {
 
-    @JsonProperty("key")
-    private String key;
-    
-    @JsonProperty("value")
-    private String value;
-    
-    @JsonProperty("description")
-    private String description;
+	@JsonProperty("mandatoryCommentOnChangeResultState")
+    private boolean mandatoryCommentOnChangeResultState;
 
-    public String getKey() {
-        return key;
+    @JsonProperty("mandatoryCommentOnChangeResultStateToNE")
+    private boolean mandatoryCommentOnChangeResultStateToNE;
+
+    @JsonProperty("mandatoryCommentOnChangeResultStateToPNE")
+    private boolean mandatoryCommentOnChangeResultStateToPNE;
+
+    // Getter and setter for mandatoryCommentOnChangeResultState
+    public boolean isMandatoryCommentOnChangeResultState() {
+        return mandatoryCommentOnChangeResultState;
     }
-    
-    public void setKey(String key) {
-        this.key = key;
+
+    public void setMandatoryCommentOnChangeResultState(boolean mandatoryCommentOnChangeResultState) {
+        this.mandatoryCommentOnChangeResultState = mandatoryCommentOnChangeResultState;
     }
-    
-    public String getValue() {
-        return value;
+
+    // Getter and setter for mandatoryCommentOnChangeResultStateToNE
+    public boolean isMandatoryCommentOnChangeResultStateToNE() {
+        return mandatoryCommentOnChangeResultStateToNE;
     }
-    
-    public void setValue(String value) {
-        this.value = value;
+
+    public void setMandatoryCommentOnChangeResultStateToNE(boolean mandatoryCommentOnChangeResultStateToNE) {
+        this.mandatoryCommentOnChangeResultStateToNE = mandatoryCommentOnChangeResultStateToNE;
     }
-    
-    public String getDescription() {
-        return description;
+
+    // Getter and setter for mandatoryCommentOnChangeResultStateToPNE
+    public boolean isMandatoryCommentOnChangeResultStateToPNE() {
+        return mandatoryCommentOnChangeResultStateToPNE;
     }
-    
-    public void setDescription(String description) {
-        this.description = description;
+
+    public void setMandatoryCommentOnChangeResultStateToPNE(boolean mandatoryCommentOnChangeResultStateToPNE) {
+        this.mandatoryCommentOnChangeResultStateToPNE = mandatoryCommentOnChangeResultStateToPNE;
     }
+
 }
