@@ -66,7 +66,7 @@ public class LoginProviderImpl implements LoginProvider {
         Permissions permissions = getPermissions(loginData.getAccessToken());
         Configurations configurations = null;
         try {
-        Configurations configurations = getExtendedConfigurations(loginData.getAccessToken(),"portal");
+        configurations = getExtendedConfigurations(loginData.getAccessToken(),"portal");
         if(!configurations.isMandatoryCommentOnChangeResultState()) {
         	configurations = getExtendedConfigurations(loginData.getAccessToken(),"None");
         }
