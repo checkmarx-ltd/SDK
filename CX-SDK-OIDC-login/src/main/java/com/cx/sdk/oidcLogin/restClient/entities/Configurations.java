@@ -2,9 +2,9 @@ package com.cx.sdk.oidcLogin.restClient.entities;
 
 public class Configurations {
 
-    private boolean mandatoryCommentOnChangeResultState = true;
-    private boolean mandatoryCommentOnChangeResultStateToNE = true;
-    private boolean mandatoryCommentOnChangeResultStateToPNE = true;
+    private boolean mandatoryCommentOnChangeResultState = false;
+    private boolean mandatoryCommentOnChangeResultStateToNE = false;
+    private boolean mandatoryCommentOnChangeResultStateToPNE = false;
 
     public boolean isMandatoryCommentOnChangeResultState() {
         return mandatoryCommentOnChangeResultState;

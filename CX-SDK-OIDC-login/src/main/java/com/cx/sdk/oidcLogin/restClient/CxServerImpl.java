@@ -321,7 +321,7 @@ public class CxServerImpl implements ICxServer {
     public Configurations getExtendedConfigurations(String accessToken, String portalOrNone) throws CxValidateResponseException {
         HttpUriRequest getRequest;
         HttpResponse extendedConfigurationsResponse = null;
-        Configurations configurations = null;
+        Configurations configurations = new Configurations();
         try {
             HttpClientBuilder builder = HttpClientBuilder.create();
             //Add using proxy

@@ -64,7 +64,7 @@ public class LoginProviderImpl implements LoginProvider {
             return null;
 
         Permissions permissions = getPermissions(loginData.getAccessToken());
-        Configurations configurations = null;
+        Configurations configurations = new Configurations();
         try {
         configurations = getExtendedConfigurations(loginData.getAccessToken(),"portal");
         if(!configurations.isMandatoryCommentOnChangeResultState()) {
@@ -72,6 +72,10 @@ public class LoginProviderImpl implements LoginProvider {
         }
         }catch (Exception e) {
             System.err.println("Error fetching configurations: " + e.getMessage());
+            //making comments mandatory in case of api failure
+            configurations.setMandatoryCommentOnChangeResultState(true);
+            configurations.setMandatoryCommentOnChangeResultStateToNE(true);
+            configurations.setMandatoryCommentOnChangeResultStateToPNE(true);
         }
         Session session = new Session("",
                 loginData.getAccessToken(),
