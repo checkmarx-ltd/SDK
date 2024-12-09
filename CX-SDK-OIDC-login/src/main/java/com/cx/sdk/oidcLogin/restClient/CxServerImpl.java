@@ -348,10 +348,8 @@ public class CxServerImpl implements ICxServer {
             ConfigurationDTO jsonResponse = parseJsonFromResponse(extendedConfigurationsResponse, ConfigurationDTO.class);
 
 
-         // Set properties from jsonResponse to configurations
-         configurations.setMandatoryCommentOnChangeResultState(jsonResponse.isMandatoryCommentOnChangeResultState());
-         configurations.setMandatoryCommentOnChangeResultStateToNE(jsonResponse.isMandatoryCommentOnChangeResultStateToNE());
-         configurations.setMandatoryCommentOnChangeResultStateToPNE(jsonResponse.isMandatoryCommentOnChangeResultStateToPNE());
+            // Set properties from jsonResponse to configurations
+            configurations = getConfigurations(jsonResponse);
 
          // Return the configured object
          return configurations;
@@ -426,7 +424,25 @@ public class CxServerImpl implements ICxServer {
                 sastPermissions.contains(Consts.MANAGE_RESULTS_EXPLOITABILITY));
     }
     
-    
+    private Configurations getConfigurations(ConfigurationDTO jsonResponse) {
+    	Configurations configurations = new Configurations();
+    	if(jsonResponse!=null) {
+    		if(jsonResponse.getMandatoryCommentOnChangeResultState()!=null 
+    	       		 && !jsonResponse.getMandatoryCommentOnChangeResultState().isEmpty()) {
+    			configurations.setMandatoryCommentOnChangeResultState("true".equalsIgnoreCase(jsonResponse.getMandatoryCommentOnChangeResultState())?true:false);
+    		}
+    		if(jsonResponse.getMandatoryCommentOnChangeResultStateToNE()!=null 
+   	       		 && !jsonResponse.getMandatoryCommentOnChangeResultStateToNE().isEmpty()) {
+   			configurations.setMandatoryCommentOnChangeResultStateToNE("true".equalsIgnoreCase(jsonResponse.getMandatoryCommentOnChangeResultStateToNE())?true:false);
+    		}
+    		if(jsonResponse.getMandatoryCommentOnChangeResultStateToPNE()!=null 
+   	       		 && !jsonResponse.getMandatoryCommentOnChangeResultStateToPNE().isEmpty()) {
+   			configurations.setMandatoryCommentOnChangeResultStateToPNE("true".equalsIgnoreCase(jsonResponse.getMandatoryCommentOnChangeResultStateToPNE())?true:false);
+    		}
+    	}
+    			
+        return configurations;
+    }
 
     private Long getAccessTokenExpirationInMilli(long accessTokenExpirationInSec) {
         long currentTime = System.currentTimeMillis();
