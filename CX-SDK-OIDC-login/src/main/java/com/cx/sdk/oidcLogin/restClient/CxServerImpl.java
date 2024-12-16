@@ -321,7 +321,7 @@ public class CxServerImpl implements ICxServer {
     public Configurations getExtendedConfigurations(String accessToken, String portalOrNone) throws CxValidateResponseException {
         HttpUriRequest getRequest;
         HttpResponse extendedConfigurationsResponse = null;
-        Configurations configurations = null;
+        Configurations configurations = new Configurations();
         try {
             HttpClientBuilder builder = HttpClientBuilder.create();
             //Add using proxy
@@ -345,8 +345,14 @@ public class CxServerImpl implements ICxServer {
             extendedConfigurationsResponse = client.execute(getRequest);
             logger.debug("Print response \n" + extendedConfigurationsResponse.getStatusLine());
             validateResponse(extendedConfigurationsResponse, 200, INFO_FAILED);
-            ConfigurationDTO[] jsonResponse = parseJsonFromResponse(extendedConfigurationsResponse, ConfigurationDTO[].class);
+            ConfigurationDTO jsonResponse = parseJsonFromResponse(extendedConfigurationsResponse, ConfigurationDTO.class);
+
+
+            // Set properties from jsonResponse to configurations
             configurations = getConfigurations(jsonResponse);
+
+         // Return the configured object
+         return configurations;
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -418,25 +424,23 @@ public class CxServerImpl implements ICxServer {
                 sastPermissions.contains(Consts.MANAGE_RESULTS_EXPLOITABILITY));
     }
     
-    private Configurations getConfigurations(ConfigurationDTO[] jsonResponse) {
+    private Configurations getConfigurations(ConfigurationDTO jsonResponse) {
     	Configurations configurations = new Configurations();
-    	
-    	for(ConfigurationDTO config : jsonResponse) {
-    		if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE.equalsIgnoreCase(config.getKey())) {
-    			if("true".equalsIgnoreCase(config.getValue())) {
-    			configurations.setMandatoryCommentOnChangeResultState(true);
-    			break;
-    			}
-    		} else if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_NE.equalsIgnoreCase(config.getKey())) {
-    			if("true".equalsIgnoreCase(config.getValue())) {
-    			configurations.setMandatoryCommentOnChangeResultStateToNE(true);
-    			}
-    		} else if(MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_PNE.equalsIgnoreCase(config.getKey())) {
-    			if("true".equalsIgnoreCase(config.getValue())) {
-    			configurations.setMandatoryCommentOnChangeResultStateToPNE(true);
-    			}
+    	if(jsonResponse!=null) {
+    		if(jsonResponse.getMandatoryCommentOnChangeResultState()!=null 
+    	       		 && !jsonResponse.getMandatoryCommentOnChangeResultState().isEmpty()) {
+    			configurations.setMandatoryCommentOnChangeResultState("true".equalsIgnoreCase(jsonResponse.getMandatoryCommentOnChangeResultState())?true:false);
     		}
-    	}    	
+    		if(jsonResponse.getMandatoryCommentOnChangeResultStateToNE()!=null 
+   	       		 && !jsonResponse.getMandatoryCommentOnChangeResultStateToNE().isEmpty()) {
+   			configurations.setMandatoryCommentOnChangeResultStateToNE("true".equalsIgnoreCase(jsonResponse.getMandatoryCommentOnChangeResultStateToNE())?true:false);
+    		}
+    		if(jsonResponse.getMandatoryCommentOnChangeResultStateToPNE()!=null 
+   	       		 && !jsonResponse.getMandatoryCommentOnChangeResultStateToPNE().isEmpty()) {
+   			configurations.setMandatoryCommentOnChangeResultStateToPNE("true".equalsIgnoreCase(jsonResponse.getMandatoryCommentOnChangeResultStateToPNE())?true:false);
+    		}
+    	}
+    			
         return configurations;
     }
 

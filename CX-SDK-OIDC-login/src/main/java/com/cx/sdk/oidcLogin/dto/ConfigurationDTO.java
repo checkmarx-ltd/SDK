@@ -1,41 +1,46 @@
 package com.cx.sdk.oidcLogin.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class ConfigurationDTO {
 
-    @JsonProperty("key")
-    private String key;
-    
-    @JsonProperty("value")
-    private String value;
-    
-    @JsonProperty("description")
-    private String description;
+	@JsonProperty("mandatoryCommentOnChangeResultState")
+    private String mandatoryCommentOnChangeResultState;
 
-    public String getKey() {
-        return key;
+    @JsonProperty("mandatoryCommentOnChangeResultStateToNE")
+    private String mandatoryCommentOnChangeResultStateToNE;
+
+    @JsonProperty("mandatoryCommentOnChangeResultStateToPNE")
+    private String mandatoryCommentOnChangeResultStateToPNE;
+
+    // Getter and setter for mandatoryCommentOnChangeResultState
+    public String getMandatoryCommentOnChangeResultState() {
+        return mandatoryCommentOnChangeResultState;
     }
-    
-    public void setKey(String key) {
-        this.key = key;
+
+    public void setMandatoryCommentOnChangeResultState(String mandatoryCommentOnChangeResultState) {
+        this.mandatoryCommentOnChangeResultState = mandatoryCommentOnChangeResultState;
     }
-    
-    public String getValue() {
-        return value;
+
+    // Getter and setter for mandatoryCommentOnChangeResultStateToNE
+    public String getMandatoryCommentOnChangeResultStateToNE() {
+        return mandatoryCommentOnChangeResultStateToNE;
     }
-    
-    public void setValue(String value) {
-        this.value = value;
+
+    public void setMandatoryCommentOnChangeResultStateToNE(String mandatoryCommentOnChangeResultStateToNE) {
+        this.mandatoryCommentOnChangeResultStateToNE = mandatoryCommentOnChangeResultStateToNE;
     }
-    
-    public String getDescription() {
-        return description;
+
+    // Getter and setter for mandatoryCommentOnChangeResultStateToPNE
+    public String getMandatoryCommentOnChangeResultStateToPNE() {
+        return mandatoryCommentOnChangeResultStateToPNE;
     }
-    
-    public void setDescription(String description) {
-        this.description = description;
+
+    public void setMandatoryCommentOnChangeResultStateToPNE(String mandatoryCommentOnChangeResultStateToPNE) {
+        this.mandatoryCommentOnChangeResultStateToPNE = mandatoryCommentOnChangeResultStateToPNE;
     }
+
 }

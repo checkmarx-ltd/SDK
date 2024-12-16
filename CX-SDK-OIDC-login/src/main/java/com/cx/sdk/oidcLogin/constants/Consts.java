@@ -31,7 +31,7 @@ public class Consts {
     public static final String LOGOUT_REDIRECT = "post_logout_redirect_uri";
     public static final String TOKEN_HINT = "id_token_hint";
     public static final String LOGOUT_ID = "logoutId";
-    public static final String EXTENDED_CONFIGURATIONS_ENDPOINT = "/" + APPLICATION_NAME + "/configurationsExtended";
+    public static final String EXTENDED_CONFIGURATIONS_ENDPOINT = "/" + APPLICATION_NAME + "/Configurations";
     public static final String PORTAL= "portal";
     public static final String NONE ="None";
     
