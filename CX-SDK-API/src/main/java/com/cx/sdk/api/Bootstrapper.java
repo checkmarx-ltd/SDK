@@ -3,9 +3,14 @@ package com.cx.sdk.api;
 import com.cx.sdk.application.contracts.providers.*;
 import com.cx.sdk.application.services.LoginService;
 import com.cx.sdk.application.services.LoginServiceImpl;
+<<<<<<< Updated upstream
 import com.cx.sdk.domain.CredentialsInputValidator;
 import com.cx.sdk.domain.enums.LoginType;
 import com.cx.sdk.domain.validators.CredentialsInputValidatorImpl;
+=======
+import com.cx.sdk.application.services.ShortDescriptionService;
+import com.cx.sdk.application.services.ShortDescriptionServiceImpl;
+>>>>>>> Stashed changes
 import com.cx.sdk.infrastructure.SDKConfigurationProviderFactory;
 import com.cx.sdk.infrastructure.providers.*;
 import com.google.inject.AbstractModule;
@@ -49,6 +54,7 @@ public class Bootstrapper extends AbstractModule {
 
     private void registerApplicationDependencies() {
         bind(LoginService.class).to(LoginServiceImpl.class);
+        bind(ShortDescriptionService.class).to(ShortDescriptionServiceImpl.class);
     }
 
     private void registerDomainDependencies() {
@@ -57,9 +63,13 @@ public class Bootstrapper extends AbstractModule {
 
     private void registerInfrastructureDependencies() {
         bind(LoginProvider.class).to(LoginProviderImpl.class);
+<<<<<<< Updated upstream
         bind(ConfigurationProvider.class).to(ConfigurationProviderImpl.class);
         bind(TeamProvider.class).to(TeamProviderImpl.class);
         bind(PresetProvider.class).to(PresetProviderImpl.class);
         bind(ProjectProvider.class).to(ProjectProviderImpl.class);
+=======
+        bind(ShortDescriptionProvider.class).to(ShortDescriptionProviderImpl.class);
+>>>>>>> Stashed changes
     }
 }

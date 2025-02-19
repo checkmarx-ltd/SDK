@@ -19,6 +19,7 @@ public interface CxClient {
      */
     SessionDTO login() throws SdkException;
 
+<<<<<<< Updated upstream
     /*
      * @return List<EngineConfigurationDTO>
      * @throws CxClientException
@@ -44,4 +45,15 @@ public interface CxClient {
      * @throws CxClientException
      */
     Boolean validateProjectName(String projectName, String teamId) throws CxClientException;
+=======
+    boolean isTokenExpired(Long expirationTime);
+
+    SessionDTO getAccessTokenFromRefreshToken(String refreshToken);
+
+    boolean isCxWebServiceAvailable();
+
+    void logout();
+
+	String fetchShortDescription(String accessToken, long scanId, long pathId);
+>>>>>>> Stashed changes
 }

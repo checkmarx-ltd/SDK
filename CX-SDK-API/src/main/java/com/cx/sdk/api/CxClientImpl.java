@@ -7,6 +7,7 @@ import com.cx.sdk.api.dtos.TeamDTO;
 import com.cx.sdk.application.contracts.exceptions.NotAuthorizedException;
 import com.cx.sdk.application.contracts.providers.*;
 import com.cx.sdk.application.services.LoginService;
+import com.cx.sdk.application.services.ShortDescriptionService;
 import com.cx.sdk.domain.Session;
 import com.cx.sdk.domain.entities.EngineConfiguration;
 import com.cx.sdk.domain.entities.Preset;
@@ -38,9 +39,11 @@ public class CxClientImpl implements CxClient {
     private final ProjectProvider projectProvider;
 
     private static Session singletonSession;
+    private final ShortDescriptionService shortDescriptionService;
 
     @Inject
     private CxClientImpl(LoginService loginService,
+<<<<<<< Updated upstream
                          SDKConfigurationProvider sdkConfigurationProvider,
                          ConfigurationProvider configurationProvider,
                          PresetProvider presetProvider,
@@ -52,6 +55,12 @@ public class CxClientImpl implements CxClient {
         this.presetProvider = presetProvider;
         this.teamProvider = teamProvider;
         this.projectProvider = projectProvider;
+=======
+                         SDKConfigurationProvider sdkConfigurationProvider,ShortDescriptionService shortDescriptionServic) {
+        this.loginService = loginService;
+        this.sdkConfigurationProvider = sdkConfigurationProvider;
+        this.shortDescriptionService = shortDescriptionServic;
+>>>>>>> Stashed changes
     }
 
     public static CxClient createNewInstance(SdkConfiguration configuration) {
@@ -216,6 +225,13 @@ public class CxClientImpl implements CxClient {
         catch(SdkException sdk) {
             throw new CxClientException(sdk.getMessage());
         }
+    }
+    
+    @Override
+    public String fetchShortDescription(String accessToken , long scanId, long pathId  ) {
+    	String shortDescription = "Click on the vulnerable file to view.";
+    	shortDescription = shortDescriptionService.fetchShortDescription(accessToken, scanId, pathId);
+    	return shortDescription;
     }
 
 
