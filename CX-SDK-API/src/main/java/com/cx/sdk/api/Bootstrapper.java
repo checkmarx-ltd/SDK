@@ -3,6 +3,8 @@ package com.cx.sdk.api;
 import com.cx.sdk.application.contracts.providers.*;
 import com.cx.sdk.application.services.LoginService;
 import com.cx.sdk.application.services.LoginServiceImpl;
+import com.cx.sdk.application.services.ShortDescriptionService;
+import com.cx.sdk.application.services.ShortDescriptionServiceImpl;
 import com.cx.sdk.infrastructure.SDKConfigurationProviderFactory;
 import com.cx.sdk.infrastructure.providers.*;
 import com.google.inject.AbstractModule;
@@ -42,9 +44,11 @@ public class Bootstrapper extends AbstractModule {
 
     private void registerApplicationDependencies() {
         bind(LoginService.class).to(LoginServiceImpl.class);
+        bind(ShortDescriptionService.class).to(ShortDescriptionServiceImpl.class);
     }
 
     private void registerInfrastructureDependencies() {
         bind(LoginProvider.class).to(LoginProviderImpl.class);
+        bind(ShortDescriptionProvider.class).to(ShortDescriptionProviderImpl.class);
     }
 }

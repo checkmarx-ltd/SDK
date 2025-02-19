@@ -3,6 +3,7 @@ package com.cx.sdk.api;
 import com.cx.sdk.api.dtos.SessionDTO;
 import com.cx.sdk.application.contracts.providers.SDKConfigurationProvider;
 import com.cx.sdk.application.services.LoginService;
+import com.cx.sdk.application.services.ShortDescriptionService;
 import com.cx.sdk.domain.Session;
 import com.cx.sdk.domain.exceptions.SdkException;
 import com.google.inject.Guice;
@@ -23,12 +24,14 @@ public class CxClientImpl implements CxClient {
     private final LoginService loginService;
     private final SDKConfigurationProvider sdkConfigurationProvider;
     private static Session singletonSession;
+    private final ShortDescriptionService shortDescriptionService;
 
     @Inject
     private CxClientImpl(LoginService loginService,
-                         SDKConfigurationProvider sdkConfigurationProvider) {
+                         SDKConfigurationProvider sdkConfigurationProvider,ShortDescriptionService shortDescriptionService) {
         this.loginService = loginService;
         this.sdkConfigurationProvider = sdkConfigurationProvider;
+        this.shortDescriptionService = shortDescriptionService ;
     }
 
     public static CxClient createNewInstance(SdkConfiguration configuration) {
@@ -74,6 +77,13 @@ public class CxClientImpl implements CxClient {
 
     public void logout() {
         loginService.logout();
+    }
+    
+    @Override
+    public String fetchShortDescription(String accessToken , long scanId, long pathId  ) {
+    	String shortDescription = "Click on the vulnerable file to view.";
+    	shortDescription = shortDescriptionService.fetchShortDescription(accessToken, scanId, pathId);
+    	return shortDescription;
     }
 
 }

@@ -21,4 +21,6 @@ public interface CxClient {
     boolean isCxWebServiceAvailable();
 
     void logout();
+
+	String fetchShortDescription(String accessToken, long scanId, long pathId);
 }

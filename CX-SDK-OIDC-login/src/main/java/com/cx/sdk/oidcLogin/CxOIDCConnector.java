@@ -54,4 +54,15 @@ public class CxOIDCConnector {
         loginData.setCxVersion(sastVersionSplit[0]+"."+sastVersionSplit[1]);
         return loginData;
     }
+    
+    public String fetchShortDescription(String accessToken, Long scanId, Long pathId) throws Exception {
+    	String shortDescription = "Click on the vulnerable file to view.";
+    	logger.debug("CxOIDCConnector :: fetchShortDescription :: scanId "+scanId+" :: pathId :: "+pathId);
+    	try {
+    		shortDescription = cxServer.getShortDescription(accessToken, scanId, pathId);
+    	}catch(Exception e) {
+    		logger.error("CxOIDCConnector :: fetchShortDescription :: "+ e.getMessage());
+    	}
+    	return shortDescription;
+    }
 }
