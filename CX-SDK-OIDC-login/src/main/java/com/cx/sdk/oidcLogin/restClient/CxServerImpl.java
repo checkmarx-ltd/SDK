@@ -6,12 +6,17 @@ import com.cx.sdk.oidcLogin.dto.AccessTokenDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
 import org.apache.http.*;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -47,6 +52,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.net.ssl.HttpsURLConnection;
@@ -588,4 +594,61 @@ public class CxServerImpl implements ICxServer {
             logger.warn("Failed to set SSL TLS : " + e.getMessage());
         }
     }
+
+	@Override
+    public String getShortDescription(String accessToken, long scanId, long pathId) throws CxRestClientException{
+    	String shortDescription = "Click on the vulnerable file to view.";
+    	
+    	if( scanId == 0 && pathId == 0 ) return shortDescription;
+	    String apiUrl = String.format("CxRestAPI/sast/scans/%d/results/%d/shortDescription", scanId, pathId);
+	    
+	    HttpUriRequest getRequest;
+	    HttpResponse response = null;
+	    
+	    try {
+	    	setClient();
+	    	getRequest = RequestBuilder.get()
+	                .setUri(serverURL+apiUrl)
+	                .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+	                .setHeader("Authorization", "Bearer " + accessToken)
+	                .build();
+
+	        logger.debug("Sending GET request: " + getRequest.getRequestLine());
+	        response = client.execute(getRequest);
+	        logger.debug("Response received: " + response.getStatusLine());
+
+	        HttpEntity entity = response.getEntity();
+	        if (entity != null) {
+	            String responseString = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+	            shortDescription = extractShortDescription(responseString);
+	        } else {
+	            logger.error("Response entity is null");
+	            shortDescription = "Failed to Fetch the Short Description";
+	            return shortDescription;
+	        }
+	        
+	    } catch (IOException e) {
+	        logger.error("Error while fetching short description", e);
+	        throw new CxRestClientException("Error while fetching short description: " + e.getMessage());
+	    } finally {
+	        HttpClientUtils.closeQuietly(response);
+	    }
+	    
+	    return shortDescription;
+    }
+    
+    private static String extractShortDescription(String jsonResponse) {
+		try {
+	        ObjectMapper objectMapper = new ObjectMapper();
+	        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+	        JsonNode shortDescriptionNode = rootNode.get("shortDescription");
+	        if (shortDescriptionNode != null) {
+	            return shortDescriptionNode.asText();
+	        }
+	    } catch (Exception e) {
+	    	logger.error("Error while extracting short description: " + e.getMessage());
+	    }
+	    return null;
+	}
+
 }
