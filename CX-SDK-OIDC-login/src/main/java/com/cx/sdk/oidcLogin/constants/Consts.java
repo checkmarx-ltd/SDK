@@ -44,6 +44,6 @@ public class Consts {
 	public static final String CX_PLUGIN_VERSION = "CxPluginVersion";
 	public static final String PLUGIN_NAME = "plugin_name=";
 	
-    public static final String SHORT_DESCRPTION_API = APPLICATION_NAME+"/sast/scans/%d/results/%d/shortDescription";
+    public static final String SHORT_DESCRPTION_API = "/"+APPLICATION_NAME+"/sast/scans/%d/results/%d/shortDescription";
 	
 }
