@@ -597,10 +597,10 @@ public class CxServerImpl implements ICxServer {
 
 	@Override
     public String getShortDescription(String accessToken, long scanId, long pathId) throws CxRestClientException{
-    	String shortDescription = "Click on the vulnerable file to view.";
+    	String shortDescription = "Select a vulnerable file to view its details.";
     	
     	if( scanId == 0 && pathId == 0 ) return shortDescription;
-	    String apiUrl = String.format("CxRestAPI/sast/scans/%d/results/%d/shortDescription", scanId, pathId);
+    	String apiUrl = String.format(Consts.SHORT_DESCRPTION_API, scanId, pathId);
 	    
 	    HttpUriRequest getRequest;
 	    HttpResponse response = null;
@@ -610,6 +610,7 @@ public class CxServerImpl implements ICxServer {
 	    	getRequest = RequestBuilder.get()
 	                .setUri(serverURL+apiUrl)
 	                .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+	                .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
 	                .setHeader("Authorization", "Bearer " + accessToken)
 	                .build();
 
