@@ -94,6 +94,13 @@ public class CxServerImpl implements ICxServer {
     private static final String ORIGIN_HEADER = "cxOrigin";
     private static final String ORIGIN_URL_HEADER = "cxOriginUrl";
     private static final String TEAM_PATH = "cxTeamPath";
+    private String pluginVersion;
+    
+    
+    public String getPluginVersion() {
+    	this.pluginVersion =  System.getProperty(Consts.CX_PLUGIN_VERSION,"Unknown Version");
+		return pluginVersion;
+	}
 
     public static String getCxOrigin() {
         return cxOrigin;
@@ -209,6 +216,7 @@ public class CxServerImpl implements ICxServer {
                 .get()
                 .setUri(versionURL)
                 .setHeader("cxOrigin", clientName)
+                .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                 .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                 .build();
 
@@ -235,6 +243,7 @@ public class CxServerImpl implements ICxServer {
             postRequest = RequestBuilder.post()
                     .setUri(tokenEndpointURL)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                     .setEntity(TokenHTTPEntityBuilder.createGetAccessTokenFromCodeParamsEntity(code, serverURL))
                     .build();
             logger.debug("Print Request\n" + postRequest.getRequestLine());
@@ -263,6 +272,7 @@ public class CxServerImpl implements ICxServer {
             postRequest = RequestBuilder.post()
                     .setUri(tokenEndpointURL)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                     .setEntity(TokenHTTPEntityBuilder.createGetAccessTokenFromRefreshTokenParamsEntity(refreshToken))
                     .build();
             logger.debug("Print Request\n" + postRequest.getRequestLine());
@@ -300,6 +310,7 @@ public class CxServerImpl implements ICxServer {
             postRequest = RequestBuilder.post()
                     .setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
                     .setHeader("Content-Length","0")
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                     .setUri(userInfoURL)
                     .build();
             //Add print request
@@ -338,6 +349,7 @@ public class CxServerImpl implements ICxServer {
             		.get()
             		.setUri(extendedConfigurationsURL+"/"+portalOrNone)
             		.setHeader("cxOrigin", clientName)
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
             		.setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
                     .build();
             //Add print request
@@ -386,6 +398,7 @@ public class CxServerImpl implements ICxServer {
             httpMethod.addHeader(ORIGIN_HEADER, getCxOrigin());
             httpMethod.addHeader(ORIGIN_URL_HEADER, getCxOriginUrl());
             httpMethod.addHeader(TEAM_PATH, getCxTeam());
+            httpMethod.addHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion());
             if (accessTokenDTO.getAccessToken()!= null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, accessTokenDTO.getTokenType() + " " + accessTokenDTO.getAccessToken());
             }
