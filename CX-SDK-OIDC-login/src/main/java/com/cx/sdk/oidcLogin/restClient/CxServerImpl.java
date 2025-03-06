@@ -19,6 +19,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.Map;
 import com.cx.sdk.oidcLogin.dto.ConfigurationDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
@@ -597,14 +598,14 @@ public class CxServerImpl implements ICxServer {
 
 	@Override
     public String getShortDescription(String accessToken, long scanId, long pathId) throws CxRestClientException{
-    	String shortDescription = "Select a vulnerable file to view its details.";
-    	
+    	String shortDescription = "";
+
     	if( scanId == 0 && pathId == 0 ) return shortDescription;
     	String apiUrl = String.format(Consts.SHORT_DESCRPTION_API, scanId, pathId);
-	    
+
 	    HttpUriRequest getRequest;
 	    HttpResponse response = null;
-	    
+
 	    try {
 	    	setClient();
 	    	getRequest = RequestBuilder.get()
@@ -637,16 +638,16 @@ public class CxServerImpl implements ICxServer {
 	    
 	    return shortDescription;
     }
-    
+	
     private static String extractShortDescription(String jsonResponse) {
-		try {
-	        ObjectMapper objectMapper = new ObjectMapper();
+    	try {
+    		ObjectMapper objectMapper = new ObjectMapper();
 	        JsonNode rootNode = objectMapper.readTree(jsonResponse);
 	        JsonNode shortDescriptionNode = rootNode.get("shortDescription");
 	        if (shortDescriptionNode != null) {
-	            return shortDescriptionNode.asText();
+	        	return shortDescriptionNode.asText();
 	        }
-	    } catch (Exception e) {
+        } catch (Exception e) {
 	    	logger.error("Error while extracting short description: " + e.getMessage());
 	    }
 	    return null;
