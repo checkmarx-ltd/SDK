@@ -7,14 +7,20 @@ import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
 import org.apache.http.*;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.apache.http.client.methods.*;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.entity.StringEntity;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+
+import java.io.FileInputStream;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.util.*;
+
 import com.cx.sdk.oidcLogin.dto.ConfigurationDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
@@ -60,9 +66,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.cx.sdk.oidcLogin.constants.Consts.*;
 
@@ -550,20 +553,171 @@ public class CxServerImpl implements ICxServer {
         return result;
     }
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
+
         try {
-            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
-            builder.setSslcontext(disabledSSLContext);
-            builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-            //Add using proxy
-            if(!isCustomProxySet(proxyParams))
-                builder.useSystemProperties();
+
+            boolean useCustomTrustStore = false;
+
+            KeyStore combinedKS = null;
+
+            TrustStrategy trustStrategy = null;
+
+
+            //Caller is required to set these custom properties based on the context.
+
+            //cx.trustAllCerts is to trust all certificates.
+
+            String trustAllCertsValue = System.getProperty("cx.trustAllCerts");
+
+            boolean trustAllCerts = (trustAllCertsValue != null)? Boolean.parseBoolean(trustAllCertsValue) : false;
+
+
+            // Path to the additional keystore
+
+            String additionalKeystorePath = System.getProperty("cx.custom.truststore.path");
+
+            if(!trustAllCerts && null != additionalKeystorePath)
+
+                useCustomTrustStore = true;
+
+            if(trustAllCerts)
+
+                trustStrategy = new TrustAllStrategy();
+
             else
+
+                trustStrategy = new TrustSelfSignedStrategy();
+
+
+            if(useCustomTrustStore) {
+
+                // Password for the additional keystore
+
+                String secwd = System.getProperty("cx.custom.truststore.secwd");
+
+                char[] additionalKeystorePassword= null;
+
+                if(null != secwd)
+
+                    additionalKeystorePassword = secwd.toCharArray();
+
+                // Load the default trust store
+
+                KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+                try (FileInputStream fis = new FileInputStream(System.getProperty("java.home") + "/lib/security/cacerts")) {
+
+                    defaultKeyStore.load(fis, null); // works without protection
+
+                } catch (CertificateException | IOException e) {
+
+                    //SSLContext will default to default trust store
+
+                }
+
+                // Load the additional keystore
+
+                KeyStore additionalKeyStore = KeyStore.getInstance("JKS");
+
+                try (FileInputStream fis = new FileInputStream(additionalKeystorePath)) {
+
+                    additionalKeyStore.load(fis, additionalKeystorePassword);
+
+                } catch (CertificateException | IOException e) {
+
+                }
+
+                combinedKS = combineTwo(additionalKeyStore, defaultKeyStore);
+
+            }
+
+            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(combinedKS, trustStrategy).build();
+
+            builder.setSslcontext(disabledSSLContext);
+
+            builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+
+            //Add using proxy
+
+            if(!isCustomProxySet(proxyParams))
+
+                builder.useSystemProperties();
+
+            else
+
                 setCustomProxy(builder,proxyParams);
+
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
+
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
+
         }
 
         return builder;
+
+    }
+
+    /**
+
+     * Function that reads both default and additional trust stores and creates single new store out of it.
+
+     * Calling loadTrustMaterial once with each trust store does not work with Apache http client.
+
+     * @paramkeyStore1
+
+     * @paramkeyStore2
+
+     * @return
+
+     */
+
+    private static KeyStore combineTwo(KeyStore keyStore1, KeyStore keyStore2)  {
+
+        KeyStore combinedKeyStore = null;
+
+        try {
+
+            // Create a new KeyStore to combine both KeyStores
+
+            combinedKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+            combinedKeyStore.load(null, null);
+
+            // Copy certificates from the first KeyStore to the combined KeyStore
+
+            Enumeration<String> aliases1;
+
+            aliases1 = keyStore1.aliases();
+
+            while (aliases1.hasMoreElements()) {
+
+                String alias = aliases1.nextElement();
+
+                Certificate cert = keyStore1.getCertificate(alias);
+
+                combinedKeyStore.setCertificateEntry(alias, cert);
+
+            }
+
+            // Copy certificates from the second KeyStore to the combined KeyStore
+
+            Enumeration<String> aliases2 = keyStore2.aliases();
+
+            while (aliases2.hasMoreElements()) {
+
+                String alias = aliases2.nextElement();
+
+                Certificate cert = keyStore2.getCertificate(alias);
+
+                combinedKeyStore.setCertificateEntry(alias, cert);
+
+            }
+
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+
+        }
+        return combinedKeyStore;
+
     }
 
     private void setSSLTls(String protocol) {

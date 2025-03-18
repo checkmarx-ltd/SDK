@@ -100,6 +100,11 @@
             <artifactId>jxbrowser-license</artifactId>
             <version>7.23</version>
         </dependency>
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser</artifactId>
+            <version>7.36</version>
+        </dependency>
     </dependencies>
 
 
