@@ -197,17 +197,10 @@ public class CxServerImpl implements ICxServer {
         HttpResponse response;
         HttpUriRequest request;
         String version;
-        HttpClientBuilder builder = HttpClientBuilder.create();
         try {
+            headers.clear();
+            setClient();
 
-            if(!isCustomProxySet(proxyParams))
-                builder.useSystemProperties();
-            else
-                setCustomProxy(builder,proxyParams);
-
-            //Add proxy to request
-            client = builder.setDefaultHeaders(headers).build();
-            
         request = RequestBuilder
                 .get()
                 .setUri(versionURL)
