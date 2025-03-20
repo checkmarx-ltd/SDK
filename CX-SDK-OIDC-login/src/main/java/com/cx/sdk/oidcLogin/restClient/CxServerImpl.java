@@ -212,7 +212,9 @@ public class CxServerImpl implements ICxServer {
                 .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                 .build();
 
-        logger.debug(" Print Get Version request line\n" + request.getRequestLine());
+        logger.info("Request URI: " + versionURL);
+        logger.info("Request headers: " + Arrays.toString(request.getAllHeaders()));
+        logger.info(" Print Get Version request line\n" + request.getRequestLine());
 
         response = client.execute(request);
         logger.debug("Print Get version response \n" + response.getStatusLine());
@@ -220,6 +222,7 @@ public class CxServerImpl implements ICxServer {
         validateResponse(response, 200, GET_VERSION_ERROR);
         version = new BasicResponseHandler().handleResponse(response);
         } catch (IOException | CxValidateResponseException e) {
+            logger.error("Exception occurred while retrieving version for client " + clientName, e);
             version = "Pre 9.0";
         }
 
