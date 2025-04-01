@@ -216,7 +216,6 @@ public class CxServerImpl implements ICxServer {
                 .get()
                 .setUri(versionURL)
                 .setHeader("cxOrigin", clientName)
-                .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                 .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                 .build();
 
@@ -616,6 +615,7 @@ public class CxServerImpl implements ICxServer {
             SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(combinedKS, trustStrategy).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+
             //Add using proxy
             if(!isCustomProxySet(proxyParams))
                 builder.useSystemProperties();
@@ -624,7 +624,6 @@ public class CxServerImpl implements ICxServer {
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             logger.warn("Failed to disable certificate verification: " + e.getMessage());
         }
-
         return builder;
     }
 
