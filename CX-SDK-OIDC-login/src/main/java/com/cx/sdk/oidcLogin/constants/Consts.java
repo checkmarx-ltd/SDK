@@ -38,4 +38,12 @@ public class Consts {
     public static final String MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE ="MandatoryCommentOnChangeResultState";
     public static final String MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_NE ="MandatoryCommentOnChangeResultStateToNE";
     public static final String MANDATORY_COMMENTS_ON_CHANGE_RESULT_STATE_TO_PNE ="MandatoryCommentOnChangeResultStateToPNE";
+    
+	public static final String PLUGIN_VERSION = ";plugin_version=";
+	public static final String USER_AGENT_HEADER = "User-Agent";
+	public static final String CX_PLUGIN_VERSION = "CxPluginVersion";
+	public static final String PLUGIN_NAME = "plugin_name=";
+	
+    public static final String SHORT_DESCRPTION_API = "/"+APPLICATION_NAME+"/sast/scans/%d/results/%d/shortDescription";
+	
 }

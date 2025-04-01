@@ -25,4 +25,6 @@ public interface ICxServer {
     String getCxVersion() throws IOException, CxValidateResponseException;
 
     Object getCxVersion(String clientName) throws CxValidateResponseException, IOException;
+
+	String getShortDescription(String accessToken, long scanId, long pathId) throws CxRestClientException;
 }

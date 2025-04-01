@@ -6,15 +6,19 @@ import com.cx.sdk.oidcLogin.dto.AccessTokenDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
 import org.apache.http.*;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
 import com.cx.sdk.oidcLogin.exceptions.CxRestLoginException;
 import com.cx.sdk.oidcLogin.exceptions.CxValidateResponseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import com.cx.sdk.oidcLogin.dto.ConfigurationDTO;
 import com.cx.sdk.oidcLogin.dto.UserInfoDTO;
 import com.cx.sdk.oidcLogin.exceptions.CxRestClientException;
@@ -36,6 +40,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -47,22 +52,24 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.cx.sdk.oidcLogin.constants.Consts.*;
 
@@ -94,6 +101,13 @@ public class CxServerImpl implements ICxServer {
     private static final String ORIGIN_HEADER = "cxOrigin";
     private static final String ORIGIN_URL_HEADER = "cxOriginUrl";
     private static final String TEAM_PATH = "cxTeamPath";
+    private String pluginVersion;
+    
+    
+    public String getPluginVersion() {
+    	this.pluginVersion =  System.getProperty(Consts.CX_PLUGIN_VERSION,"Unknown Version");
+		return pluginVersion;
+	}
 
     public static String getCxOrigin() {
         return cxOrigin;
@@ -194,21 +208,15 @@ public class CxServerImpl implements ICxServer {
         HttpResponse response;
         HttpUriRequest request;
         String version;
-        HttpClientBuilder builder = HttpClientBuilder.create();
         try {
+        	headers.clear();
+        	setClient();
 
-            if(!isCustomProxySet(proxyParams))
-                builder.useSystemProperties();
-            else
-                setCustomProxy(builder,proxyParams);
-
-            //Add proxy to request
-            client = builder.setDefaultHeaders(headers).build();
-            
         request = RequestBuilder
                 .get()
                 .setUri(versionURL)
                 .setHeader("cxOrigin", clientName)
+                .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                 .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
                 .build();
 
@@ -220,6 +228,7 @@ public class CxServerImpl implements ICxServer {
         validateResponse(response, 200, GET_VERSION_ERROR);
         version = new BasicResponseHandler().handleResponse(response);
         } catch (IOException | CxValidateResponseException e) {
+        	logger.warn("CxServerImpl :: getCxVersion :: exception " + e.getMessage());
             version = "Pre 9.0";
         }
 
@@ -235,6 +244,7 @@ public class CxServerImpl implements ICxServer {
             postRequest = RequestBuilder.post()
                     .setUri(tokenEndpointURL)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                     .setEntity(TokenHTTPEntityBuilder.createGetAccessTokenFromCodeParamsEntity(code, serverURL))
                     .build();
             logger.debug("Print Request\n" + postRequest.getRequestLine());
@@ -263,6 +273,7 @@ public class CxServerImpl implements ICxServer {
             postRequest = RequestBuilder.post()
                     .setUri(tokenEndpointURL)
                     .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                     .setEntity(TokenHTTPEntityBuilder.createGetAccessTokenFromRefreshTokenParamsEntity(refreshToken))
                     .build();
             logger.debug("Print Request\n" + postRequest.getRequestLine());
@@ -300,6 +311,7 @@ public class CxServerImpl implements ICxServer {
             postRequest = RequestBuilder.post()
                     .setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
                     .setHeader("Content-Length","0")
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
                     .setUri(userInfoURL)
                     .build();
             //Add print request
@@ -338,6 +350,7 @@ public class CxServerImpl implements ICxServer {
             		.get()
             		.setUri(extendedConfigurationsURL+"/"+portalOrNone)
             		.setHeader("cxOrigin", clientName)
+                    .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
             		.setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
                     .build();
             //Add print request
@@ -386,6 +399,7 @@ public class CxServerImpl implements ICxServer {
             httpMethod.addHeader(ORIGIN_HEADER, getCxOrigin());
             httpMethod.addHeader(ORIGIN_URL_HEADER, getCxOriginUrl());
             httpMethod.addHeader(TEAM_PATH, getCxTeam());
+            httpMethod.addHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion());
             if (accessTokenDTO.getAccessToken()!= null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, accessTokenDTO.getTokenType() + " " + accessTokenDTO.getAccessToken());
             }
@@ -550,8 +564,56 @@ public class CxServerImpl implements ICxServer {
         return result;
     }
     private HttpClientBuilder disableCertificateValidation(HttpClientBuilder builder) {
-        try {
-            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
+    	try {
+            boolean useCustomTrustStore = false;            
+            KeyStore combinedKS = null;
+            TrustStrategy trustStrategy = null;           
+
+            //Caller is required to set these custom properties based on the context.
+            //cx.trustAllCerts is to trust all certificates.
+
+            String trustAllCertsValue = System.getProperty("cx.trustAllCerts");            
+            boolean trustAllCerts = (trustAllCertsValue != null)? Boolean.parseBoolean(trustAllCertsValue) : false;
+
+            // Path to the additional keystore
+            String additionalKeystorePath = System.getProperty("cx.custom.truststore.path");
+
+            if(!trustAllCerts && null != additionalKeystorePath)
+                useCustomTrustStore = true;
+
+            if(trustAllCerts)
+                trustStrategy = new TrustAllStrategy();
+            else
+                trustStrategy = new TrustSelfSignedStrategy();
+
+
+            if(useCustomTrustStore) {
+                // Password for the additional keystore
+                 String secwd = System.getProperty("cx.custom.truststore.secwd");
+                 char[] additionalKeystorePassword= null;
+                 if(null != secwd)
+                     additionalKeystorePassword = secwd.toCharArray();
+
+                // Load the default trust store
+                KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+                try (FileInputStream fis = new FileInputStream(System.getProperty("java.home") + "/lib/security/cacerts")) {
+                    defaultKeyStore.load(fis, null); // works without protection
+                } catch (CertificateException | IOException e) {
+                    //SSLContext will default to default trust store
+                }
+
+                // Load the additional keystore
+                KeyStore additionalKeyStore = KeyStore.getInstance("JKS");
+                try (FileInputStream fis = new FileInputStream(additionalKeystorePath)) {
+                    additionalKeyStore.load(fis, additionalKeystorePassword);
+                } catch (CertificateException | IOException e) {
+
+                }
+                combinedKS = combineTwo(additionalKeyStore, defaultKeyStore);
+            }
+
+            SSLContext disabledSSLContext = SSLContexts.custom().loadTrustMaterial(combinedKS, trustStrategy).build();
             builder.setSslcontext(disabledSSLContext);
             builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
             //Add using proxy
@@ -566,6 +628,49 @@ public class CxServerImpl implements ICxServer {
         return builder;
     }
 
+
+    /**
+	 * Function that reads both default and additional trust stores and creates
+	 * single new store out of it.
+	 * Calling loadTrustMaterial once with each trust store does not work with
+	 * Apache http client.
+	 * @param keyStore1
+	 * @param keyStore2
+	 * @return
+	 */
+	private static KeyStore combineTwo(KeyStore keyStore1, KeyStore keyStore2) {
+
+		KeyStore combinedKeyStore = null;
+
+		try {
+			// Create a new KeyStore to combine both KeyStores
+			combinedKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			combinedKeyStore.load(null, null);
+			
+			// Copy certificates from the first KeyStore to the combined KeyStore
+			Enumeration<String> aliases1;
+			aliases1 = keyStore1.aliases();
+			while (aliases1.hasMoreElements()) {
+				String alias = aliases1.nextElement();
+				Certificate cert = keyStore1.getCertificate(alias);
+				combinedKeyStore.setCertificateEntry(alias, cert);
+			}
+
+			// Copy certificates from the second KeyStore to the combined KeyStore
+			Enumeration<String> aliases2 = keyStore2.aliases();
+			while (aliases2.hasMoreElements()) {
+				String alias = aliases2.nextElement();
+				Certificate cert = keyStore2.getCertificate(alias);
+				combinedKeyStore.setCertificateEntry(alias, cert);
+			}
+
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+
+		}
+
+		return combinedKeyStore;
+	}
+
     private void setSSLTls(String protocol) {
         try {
             final SSLContext sslContext = SSLContext.getInstance(protocol);
@@ -575,4 +680,62 @@ public class CxServerImpl implements ICxServer {
             logger.warn("Failed to set SSL TLS : " + e.getMessage());
         }
     }
+
+	@Override
+    public String getShortDescription(String accessToken, long scanId, long pathId) throws CxRestClientException{
+    	String shortDescription = "Select a vulnerable file to view its details.";
+    	
+    	if( scanId == 0 && pathId == 0 ) return shortDescription;
+    	String apiUrl = String.format(Consts.SHORT_DESCRPTION_API, scanId, pathId);
+	    
+	    HttpUriRequest getRequest;
+	    HttpResponse response = null;
+	    
+	    try {
+	    	setClient();
+	    	getRequest = RequestBuilder.get()
+	                .setUri(serverURL+apiUrl)
+	                .setHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+	                .setHeader("User-Agent", Consts.PLUGIN_NAME+clientName+Consts.PLUGIN_VERSION+getPluginVersion())
+	                .setHeader("Authorization", "Bearer " + accessToken)
+	                .build();
+
+	        logger.debug("Sending GET request: " + getRequest.getRequestLine());
+	        response = client.execute(getRequest);
+	        logger.debug("Response received: " + response.getStatusLine());
+
+	        HttpEntity entity = response.getEntity();
+	        if (entity != null) {
+	            String responseString = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+	            shortDescription = extractShortDescription(responseString);
+	        } else {
+	            logger.error("Response entity is null");
+	            shortDescription = "Failed to Fetch the Short Description";
+	            return shortDescription;
+	        }
+	        
+	    } catch (IOException e) {
+	        logger.error("Error while fetching short description", e);
+	        throw new CxRestClientException("Error while fetching short description: " + e.getMessage());
+	    } finally {
+	        HttpClientUtils.closeQuietly(response);
+	    }
+	    
+	    return shortDescription;
+    }
+    
+    private static String extractShortDescription(String jsonResponse) {
+		try {
+	        ObjectMapper objectMapper = new ObjectMapper();
+	        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+	        JsonNode shortDescriptionNode = rootNode.get("shortDescription");
+	        if (shortDescriptionNode != null) {
+	            return shortDescriptionNode.asText();
+	        }
+	    } catch (Exception e) {
+	    	logger.error("Error while extracting short description: " + e.getMessage());
+	    }
+	    return null;
+	}
+
 }
