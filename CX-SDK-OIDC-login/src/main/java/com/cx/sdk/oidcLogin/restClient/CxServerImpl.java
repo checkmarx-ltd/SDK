@@ -48,6 +48,7 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContexts;
@@ -178,7 +179,8 @@ public class CxServerImpl implements ICxServer {
             builder.useSystemProperties();
         else
             setCustomProxy(builder,proxyParams);
-        client = builder.build();
+        client = builder.setRedirectStrategy(new LaxRedirectStrategy()).build();
+
     }
 
     public AccessTokenDTO getAccessTokenDTO() {
@@ -209,8 +211,8 @@ public class CxServerImpl implements ICxServer {
         HttpUriRequest request;
         String version;
         try {
-        	headers.clear();
-        	setClient();
+            headers.clear();
+            setClient();
 
         request = RequestBuilder
                 .get()
@@ -307,7 +309,7 @@ public class CxServerImpl implements ICxServer {
             logger.info("User info request: " + userInfoURL);
             setSSLTls("TLSv1.2");
             disableCertificateValidation(builder);
-            client = builder.setDefaultHeaders(headers).build();
+            client = builder.setDefaultHeaders(headers).setRedirectStrategy(new LaxRedirectStrategy()).build();
             postRequest = RequestBuilder.post()
                     .setHeader(Consts.AUTHORIZATION_HEADER,Consts.BEARER + accessToken)
                     .setHeader("Content-Length","0")
@@ -345,7 +347,7 @@ public class CxServerImpl implements ICxServer {
             logger.info("Extended Configuration request: " + extendedConfigurationsURL+"/"+portalOrNone);
             setSSLTls("TLSv1.2");
             disableCertificateValidation(builder);
-            client = builder.setDefaultHeaders(headers).build();
+            client = builder.setDefaultHeaders(headers).setRedirectStrategy(new LaxRedirectStrategy()).build();
             getRequest = RequestBuilder
             		.get()
             		.setUri(extendedConfigurationsURL+"/"+portalOrNone)
